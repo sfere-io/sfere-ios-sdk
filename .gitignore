@@ -1,0 +1,19 @@
+.DS_Store
+
+# Swift Package Manager / Xcode
+.build/
+.swiftpm/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Gradle / Android
+android/.gradle/
+android/**/build/
+android/local.properties
+android/.kotlin/
+*.iml
+.idea/
+
+# Secrets
+.env

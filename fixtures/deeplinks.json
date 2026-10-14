@@ -1,0 +1,83 @@
+{
+  "description": "Deep link / universal link / App Link URL -> context.clientIds and context.campaign. Same rules as packages/shared in fanfinity/sfere-sdk (URL_CLICK_IDS, CAMPAIGN_PARAMS, fbcFromFbclid) plus the utm_* -> campaign mapping the browser SDK gets from its base library. Every Sfere SDK must pass every case. nowMs is the clock to use when building fbc.",
+  "nowMs": 1760349600000,
+  "allowedClientIdKeys": ["fbp", "fbc", "ttp", "ttclid", "scid", "scclid", "epik", "li_fat_id", "msclkid", "oppref", "obref", "gclid", "wbraid", "gbraid", "twclid", "rdt_cid", "clarity_uid", "clarity_sid"],
+  "urlClickIds": {
+    "gclid": "gclid",
+    "wbraid": "wbraid",
+    "gbraid": "gbraid",
+    "ttclid": "ttclid",
+    "ScCid": "scclid",
+    "twclid": "twclid",
+    "epik": "epik",
+    "msclkid": "msclkid",
+    "li_fat_id": "li_fat_id",
+    "oppref": "oppref",
+    "rdt_cid": "rdt_cid"
+  },
+  "campaignParams": {
+    "utm_source": "source",
+    "utm_medium": "medium",
+    "utm_campaign": "name",
+    "utm_term": "term",
+    "utm_content": "content",
+    "gad_source": "gad_source",
+    "gad_campaignid": "gad_campaignid"
+  },
+  "cases": [
+    {
+      "name": "no parameters",
+      "url": "sfereexample://match/42",
+      "clientIds": {},
+      "campaign": {}
+    },
+    {
+      "name": "google ads click with utms",
+      "url": "https://app.example.com/match/42?utm_source=google&utm_medium=cpc&utm_campaign=derby&utm_term=tickets&utm_content=banner_a&gclid=CjwKCAjTEST&gad_source=1&gad_campaignid=123456",
+      "clientIds": { "gclid": "CjwKCAjTEST" },
+      "campaign": { "source": "google", "medium": "cpc", "name": "derby", "term": "tickets", "content": "banner_a", "gad_source": "1", "gad_campaignid": "123456" }
+    },
+    {
+      "name": "meta fbclid becomes fbc",
+      "url": "sfereexample://store?fbclid=IwAR_test123&utm_source=instagram",
+      "clientIds": { "fbc": "fb.1.1760349600000.IwAR_test123" },
+      "campaign": { "source": "instagram" }
+    },
+    {
+      "name": "every url click id",
+      "url": "sfereexample://p?gclid=g1&wbraid=w1&gbraid=gb1&ttclid=t1&ScCid=s1&twclid=tw1&epik=e1&msclkid=m1&li_fat_id=l1&oppref=o1&rdt_cid=r1",
+      "clientIds": { "gclid": "g1", "wbraid": "w1", "gbraid": "gb1", "ttclid": "t1", "scclid": "s1", "twclid": "tw1", "epik": "e1", "msclkid": "m1", "li_fat_id": "l1", "oppref": "o1", "rdt_cid": "r1" },
+      "campaign": {}
+    },
+    {
+      "name": "parameter names are case sensitive (sccid is not ScCid)",
+      "url": "sfereexample://p?sccid=lower&GCLID=upper",
+      "clientIds": {},
+      "campaign": {}
+    },
+    {
+      "name": "unknown and empty parameters are ignored",
+      "url": "sfereexample://p?foo=bar&gclid=&utm_source=&ttclid=t2",
+      "clientIds": { "ttclid": "t2" },
+      "campaign": {}
+    },
+    {
+      "name": "percent-encoded values are decoded",
+      "url": "https://app.example.com/p?utm_campaign=summer%20sale&gclid=abc%2Bdef",
+      "clientIds": { "gclid": "abc+def" },
+      "campaign": { "name": "summer sale" }
+    },
+    {
+      "name": "fragment is not a query",
+      "url": "https://app.example.com/p#gclid=frag",
+      "clientIds": {},
+      "campaign": {}
+    },
+    {
+      "name": "Play install referrer string (query string without a URL)",
+      "url": "utm_source=google-play&utm_medium=organic&gclid=installG",
+      "clientIds": { "gclid": "installG" },
+      "campaign": { "source": "google-play", "medium": "organic" }
+    }
+  ]
+}

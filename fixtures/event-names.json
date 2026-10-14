@@ -1,0 +1,15 @@
+{
+  "description": "Base-library event names -> Sfere event names (GA4-style snake_case, decided 2026-10-13). Property keys on these events are already snake_case except where listed in propertyRenames. Events not listed pass through unchanged.",
+  "renames": {
+    "Application Installed": "app_installed",
+    "Application Opened": "app_opened",
+    "Application Updated": "app_updated",
+    "Application Backgrounded": "app_backgrounded",
+    "Application Foregrounded": "app_foregrounded",
+    "Deep Link Opened": "deep_link_opened"
+  },
+  "propertyRenames": {
+    "deep_link_opened": { "referrer": "referring_application", "sourceApplication": "referring_application" }
+  },
+  "sfereEvents": ["app_installed", "app_opened", "app_updated", "app_backgrounded", "deep_link_opened", "session_started"]
+}
