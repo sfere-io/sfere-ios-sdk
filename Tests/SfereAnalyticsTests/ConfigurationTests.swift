@@ -88,6 +88,22 @@ final class ConfigurationTests: XCTestCase {
         XCTAssertTrue(uploader.requests.isEmpty, "the settings fetch must not reach the network")
     }
 
+    /// The base library resumes the settings task and drops its reference at once. Under XCTest it
+    /// skips the settings request entirely, so only this test covers what a real app does: if the
+    /// answer never arrives, event processing stays paused and the app sends nothing.
+    func testSettingsAnswerArrivesWhenNobodyKeepsTheTask() {
+        let settingsData = SfereSettings.data(writeKey: "key:secret", apiHost: "ingest.example.com/v1/batch")
+        let session = SfereHTTPSession(settingsData: settingsData, uploader: CapturingUploader())
+        let request = URLRequest(url: URL(string: "https://ingest.example.com/v1/batch/projects/key:secret/settings")!)
+
+        let answered = expectation(description: "settings answered")
+        session.dataTask(with: request) { data, _, _ in
+            XCTAssertEqual(data, settingsData)
+            answered.fulfill()
+        }.resume()
+        wait(for: [answered], timeout: 2)
+    }
+
     // MARK: E-commerce
 
     func testPurchaseSerialisesToGA4Keys() throws {

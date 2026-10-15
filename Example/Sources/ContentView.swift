@@ -61,6 +61,11 @@ struct ContentView: View {
                     ForEach(SampleEvents.trackEvents, id: \.name) { event in
                         eventButton(event.name) { Sfere.shared.track(event.name, properties: event.properties) }
                     }
+                    eventButton("send 200 queue_test_event") {
+                        for index in 1...SampleEvents.queueTestCount {
+                            Sfere.shared.track("queue_test_event", properties: ["index": index])
+                        }
+                    }
                     eventButton("flush now") { Sfere.shared.flush() }
                 }
 

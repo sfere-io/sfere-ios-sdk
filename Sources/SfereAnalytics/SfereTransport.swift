@@ -95,11 +95,14 @@ final class SfereSessionTask: UploadTask {
         guard localState == .suspended else { lock.unlock(); return }
         localState = .running
         lock.unlock()
-        DispatchQueue.global(qos: .utility).async { [weak self] in
-            self?.localWork?()
-            self?.lock.lock()
-            self?.localState = .completed
-            self?.lock.unlock()
+        // Strong capture on purpose: the base library drops its reference to the settings task
+        // right after resume(), so a weak capture would skip the answer and leave event processing
+        // paused forever. The block is released once it has run, so there is no cycle.
+        DispatchQueue.global(qos: .utility).async {
+            self.localWork?()
+            self.lock.lock()
+            self.localState = .completed
+            self.lock.unlock()
         }
     }
 }

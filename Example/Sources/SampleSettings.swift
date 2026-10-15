@@ -24,7 +24,8 @@ struct SampleSettings {
     }
 
     var sessionTimeoutMinutes: Int {
-        get { defaults.object(forKey: Self.sessionTimeoutKey) as? Int ?? Self.defaultSessionTimeoutMinutes }
+        // integer(forKey:) also reads the string a launch argument (-sample.sessionTimeoutMinutes 1) sets.
+        get { defaults.object(forKey: Self.sessionTimeoutKey) == nil ? Self.defaultSessionTimeoutMinutes : defaults.integer(forKey: Self.sessionTimeoutKey) }
         nonmutating set { defaults.set(newValue, forKey: Self.sessionTimeoutKey) }
     }
 }

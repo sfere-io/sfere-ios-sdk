@@ -46,5 +46,8 @@ enum SampleEvents {
         )
     }
 
+    /// Events sent by the "send 200" button, for the offline-queue flow.
+    static let queueTestCount = 200
+
     static let testDeepLink = URL(string: "sfereexample://match/42?utm_source=sample_app&utm_campaign=sdk_check&gclid=sample-gclid")!
 }

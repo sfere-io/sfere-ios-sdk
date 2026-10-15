@@ -32,3 +32,28 @@ targets:
         # Debug only: lets the app reach tools/mock_ingest.mjs over plain HTTP on 127.0.0.1.
         Debug:
           INFOPLIST_FILE: Info-Debug.plist
+  SfereExampleUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - UITests
+    dependencies:
+      - target: SfereExample
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.sfere.example.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"
+        TEST_TARGET_NAME: SfereExample
+        # XCUIApplication.open(_:) (warm deep links) needs 16.4. The app itself stays at iOS 15.
+        IPHONEOS_DEPLOYMENT_TARGET: "16.4"
+        CODE_SIGNING_ALLOWED: NO
+schemes:
+  SfereExample:
+    build:
+      targets:
+        SfereExample: all
+        SfereExampleUITests: [test]
+    test:
+      targets:
+        - SfereExampleUITests

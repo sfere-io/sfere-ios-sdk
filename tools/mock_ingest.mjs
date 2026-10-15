@@ -7,6 +7,8 @@
 //   POST /__reset     clears the recorded requests and any pending faults
 //   POST /__fail      {"status": 503, "count": 2, "retryAfter": 1}: the next `count` batch requests
 //                     get `status` (and a Retry-After header when given). They are still recorded.
+//   POST /__offline   {"offline": true}: batch requests get their connection dropped, like a dead
+//                     network, and are not recorded. {"offline": false} restores normal answers.
 //
 // Port: SFERE_MOCK_PORT (default 4320). Binds 127.0.0.1 only: the iOS Simulator shares the Mac's
 // network, and the Android emulator reaches it as 10.0.2.2.
@@ -27,6 +29,8 @@ const BATCH_PATHS = new Set(["/v1/batch", "/v1/b", "/v1/batch/b"]);
 const recordedRequests = [];
 /** Pending injected failures for batch requests: {status, remaining, retryAfter}. */
 let pendingFault = null;
+/** While true, batch requests are dropped at the socket and not recorded. */
+let offline = false;
 
 function readBody(req) {
   return new Promise((settle, fail) => {
@@ -82,6 +86,7 @@ async function handleRequest(req, res) {
   if (req.method === "POST" && url.pathname === "/__reset") {
     recordedRequests.length = 0;
     pendingFault = null;
+    offline = false;
     sendJson(res, 200, { ok: true });
     return;
   }
@@ -104,6 +109,17 @@ async function handleRequest(req, res) {
     }
     pendingFault = { status, remaining: count, retryAfter: request.retryAfter };
     sendJson(res, 200, { ok: true, status, count });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/__offline") {
+    offline = parseJson(rawBody.toString("utf8")).offline !== false;
+    sendJson(res, 200, { ok: true, offline });
+    return;
+  }
+
+  if (offline && BATCH_PATHS.has(url.pathname)) {
+    req.socket.destroy();
     return;
   }
 
