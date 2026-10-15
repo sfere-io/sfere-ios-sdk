@@ -1,0 +1,34 @@
+# XcodeGen spec for the iOS sample app. Generate the project with:
+#   xcodegen generate --spec ios/Example/project.yml
+# The generated SfereExample.xcodeproj is git-ignored; this file is the source of truth.
+name: SfereExample
+options:
+  bundleIdPrefix: io.sfere
+  deploymentTarget:
+    iOS: "15.0"
+packages:
+  SfereAnalytics:
+    path: ../..
+targets:
+  SfereExample:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    dependencies:
+      - package: SfereAnalytics
+        product: SfereAnalytics
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.sfere.example
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_FILE: Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGNING_ALLOWED: NO
+      configs:
+        # Debug only: lets the app reach tools/mock_ingest.mjs over plain HTTP on 127.0.0.1.
+        Debug:
+          INFOPLIST_FILE: Info-Debug.plist

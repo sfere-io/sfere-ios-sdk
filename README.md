@@ -9,7 +9,7 @@ Collect first-party fan events in your iOS app and send them to Sfere. It sends 
 
 ## Install
 
-> **Not yet published.** No release exists yet: the repository has no remote and no tag, so the steps below describe the planned install path for the beta.
+> **Not yet published.** No release exists yet: the repository is private and has no release tag yet, so the steps below describe the planned install path for the beta.
 
 In Xcode, choose **File → Add Package Dependencies…**, enter this repository's URL and add the `SfereAnalytics` product to your app target.
 
