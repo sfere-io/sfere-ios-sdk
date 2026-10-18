@@ -4,7 +4,7 @@ The Sfere iOS SDK. It collects first-party fan events in iOS apps and sends them
 
 - **Sibling repo:** the Android SDK is `fanfinity/sfere-android-sdk`, checked out at `~/Desktop/Projects/sfere-android-sdk`. Until 2026-10-18 both lived in one repo, `fanfinity/sfere-mobile-sdks`, which is now deleted from GitHub. The two were split because apps integrate them differently. The old local folder `~/Desktop/Projects/sfere-mobile-sdks` still exists; its `origin` points at the deleted repo.
 - **Payload contract:** `docs/WIRE-CONTRACT.md` and `docs/EVENTS.md` in the private repo `fanfinity/sfere-sdk`. Read them with `gh api 'repos/fanfinity/sfere-sdk/contents/<path>' -H 'Accept: application/vnd.github.raw'`; `gh repo clone` fails on this machine.
-- **Plan and next steps:** `sfere-mobile-sdks-plan.html` and `sfere-mobile-sdks-next-steps.html`. They cover both platforms and are moving to `fanfinity/sfere-sdk` (decided 2026-10-18; open that PR only when the user asks). Until then they are in `~/Desktop/Projects/sfere-mobile-sdks/`. Read the next-steps page at the start of every session. It has the ordered steps with their status, the user's decisions Q1–Q9, and the `#decision-record` JSON block. Copy the user's answers into that block and mark steps done there.
+- **Plan and next steps:** `docs/mobile/sfere-mobile-sdks-plan.html` and `docs/mobile/sfere-mobile-sdks-next-steps.html` in `fanfinity/sfere-sdk`. They cover both platforms. They were added by PR #27 (branch `docs/mobile-sdk-plan`); until it merges, read them with `gh api 'repos/fanfinity/sfere-sdk/contents/docs/mobile/<file>?ref=docs/mobile-sdk-plan' -H 'Accept: application/vnd.github.raw'`. Change them through a docs PR in that repo. The vendor name of the ingestion platform never appears there. Read the next-steps page at the start of every session. It has the ordered steps with their status, the user's decisions Q1–Q9, and the `#decision-record` JSON block. Copy the user's answers into that block and mark steps done there.
 - **GitHub:** private repo `fanfinity/sfere-ios-sdk`. `origin` uses HTTPS because no SSH key is loaded. Push with `git -c credential.helper='!gh auth git-credential' push`, or run `gh auth setup-git` once.
 
 ## Layout
@@ -90,4 +90,4 @@ These files are shared and must stay byte-identical in both repos: `fixtures/dee
 - **Spike B (Q1, open):** send real events to staging `/v1/batch/b` with a browser key, and check gzip support. This needs a staging host and key.
 - **`debug` option:** the README and `SfereConfiguration` say debug mode prints every payload, but the SDK prints none. Decide whether to add payload logging (on both platforms) or fix the docs.
 - **Simulator context:** `context.network` is all false and `device.model` is `arm64` on the simulator; check both on a real device before deciding anything from them.
-- **Next round:** advertising IDs, CI, and moving the plan pages to `fanfinity/sfere-sdk`.
+- **Next round:** advertising IDs, CI.
