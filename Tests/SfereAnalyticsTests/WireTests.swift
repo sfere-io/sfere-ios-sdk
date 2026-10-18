@@ -62,7 +62,7 @@ final class WireTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(uploader.events.count, count, "uploaded events", file: file, line: line)
     }
 
-    /// The cross-platform parity scenario. The Android TransportTest runs the same calls; with
+    /// The cross-platform parity scenario. The Android TransportTest (sfere-android-sdk) runs the same calls; with
     /// SFERE_PARITY_DIR set, each platform writes its upload body there for a key-by-key comparison.
     func testParityScenarioAndDeepLinkProperties() throws {
         let uploader = CapturingUploader()

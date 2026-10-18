@@ -1,8 +1,7 @@
 // swift-tools-version:5.9
 //
 // Sfere iOS SDK. The manifest sits at the repository root because Swift Package Manager only
-// resolves packages whose Package.swift is at the root of the git repository; the sources live
-// under ios/ so the Android SDK can share this repository.
+// resolves packages whose Package.swift is at the root of the git repository.
 
 import PackageDescription
 
@@ -25,15 +24,13 @@ let package = Package(
             dependencies: [
                 .product(name: "Segment", package: "analytics-swift"),
             ],
-            path: "ios/Sources/SfereAnalytics",
             resources: [
                 .process("PrivacyInfo.xcprivacy"),
             ]
         ),
         .testTarget(
             name: "SfereAnalyticsTests",
-            dependencies: ["SfereAnalytics"],
-            path: "ios/Tests/SfereAnalyticsTests"
+            dependencies: ["SfereAnalytics"]
         ),
     ]
 )

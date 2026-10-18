@@ -6,7 +6,7 @@ compares every Sfere-controlled key path, type and value per event. Platform con
 base libraries (device, os, app, ...) is listed but not compared: it differs by design, and the
 Android JVM tests run without Android's context plugin.
 
-Usage: python3 tools/parity_diff.py <dir with ios.json and android.json>
+Usage: tools/parity.sh (runs both tests, then this), or python3 tools/parity_diff.py <dir with ios.json and android.json>
 Exit code 1 when anything differs.
 """
 import json, sys, pathlib

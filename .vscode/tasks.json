@@ -1,0 +1,83 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "iOS: test",
+      "type": "shell",
+      "command": "swift test",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [
+        "$swiftc"
+      ]
+    },
+    {
+      "label": "iOS: build for Simulator",
+      "detail": "Compiles the package for iOS without booting a simulator",
+      "type": "shell",
+      "command": "xcodebuild build -quiet -scheme SfereAnalytics -destination 'generic/platform=iOS Simulator'",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "iOS: build sample app",
+      "detail": "Generates Example/SfereExample.xcodeproj with XcodeGen, then builds it for the Simulator without booting one",
+      "type": "shell",
+      "command": "xcodegen generate --spec Example/project.yml --quiet && xcodebuild build -quiet -project Example/SfereExample.xcodeproj -scheme SfereExample -destination 'generic/platform=iOS Simulator'",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "iOS: simulator flows",
+      "detail": "Phase D2: boots one simulator, runs fresh install and upgrade with simctl, then the XCUITest flows against the mock; shuts the simulator down after. Heavy: check memory first",
+      "type": "shell",
+      "command": "python3 -I tools/ios_flows.py",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Parity: compare iOS and Android payloads",
+      "detail": "Needs sfere-ios-sdk and sfere-android-sdk side by side. Checks the shared files match, runs the parity scenario on both SDKs and diffs the upload bodies",
+      "type": "shell",
+      "command": "tools/parity.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Mock ingest: start",
+      "detail": "Starts tools/mock_ingest.mjs on port 4320, or reuses the one already running",
+      "type": "shell",
+      "command": "tools/mock_ingest_ctl.sh start",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Mock ingest: stop",
+      "type": "shell",
+      "command": "tools/mock_ingest_ctl.sh stop",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

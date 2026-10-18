@@ -16,9 +16,9 @@ In Xcode, choose **File → Add Package Dependencies…**, enter this repository
 Or add it in `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/<org>/sfere-mobile-sdks.git", from: "0.1.0"),
+.package(url: "https://github.com/fanfinity/sfere-ios-sdk.git", from: "0.1.0"),
 // target dependency:
-.product(name: "SfereAnalytics", package: "sfere-mobile-sdks"),
+.product(name: "SfereAnalytics", package: "sfere-ios-sdk"),
 ```
 
 During the beta the repository is private, so Xcode needs a GitHub account with access to it.
@@ -146,7 +146,7 @@ config.debug = true
 
 ## Developing this SDK
 
-From the repository root:
+[`TESTING.md`](TESTING.md) has every test step: the parity check against the Android SDK, the sample app and the simulator flows. From the repository root:
 
 ```bash
 swift build

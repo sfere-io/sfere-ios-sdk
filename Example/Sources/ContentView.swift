@@ -2,7 +2,7 @@ import SwiftUI
 import SfereAnalytics
 
 /// One screen: settings, consent and opt-out, a button per v1 event, and the requests the mock
-/// ingestion server received. Mirrors android/sample's MainActivity.
+/// ingestion server received. Mirrors the Android sample app's MainActivity (sfere-android-sdk, sample/).
 struct ContentView: View {
     private let settings = SampleSettings()
 

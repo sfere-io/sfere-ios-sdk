@@ -2,7 +2,7 @@ import Foundation
 import SfereAnalytics
 
 /// The events the sample app's buttons send, with GA4 properties as in EVENTS.md.
-/// The Android sample app (android/sample) sends the same list.
+/// The Android sample app (sfere-android-sdk, sample/) sends the same list.
 enum SampleEvents {
     private static let jersey = SfereItem(itemId: "SKU-JERSEY-HOME", itemName: "Home jersey", price: 299, quantity: 1, itemCategories: ["apparel"])
     private static let scarf = SfereItem(itemId: "SKU-SCARF", itemName: "Club scarf", price: 79, quantity: 2, itemCategories: ["accessories"])

@@ -55,7 +55,6 @@ enum Fixtures {
     static let directory: URL = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()   // SfereAnalyticsTests
         .deletingLastPathComponent()   // Tests
-        .deletingLastPathComponent()   // ios
         .deletingLastPathComponent()   // repository root
         .appendingPathComponent("fixtures")
 

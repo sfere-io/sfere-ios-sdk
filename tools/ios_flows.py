@@ -2,7 +2,7 @@
 """Phase D2: run the iOS sample app on one simulator and check what the mock ingestion server receives.
 
 Flows run here (they need simctl): fresh install and upgrade. Then the XCUITest suite
-(ios/Example/UITests) runs the in-app flows: consent, identify and reset, opt-out, server errors,
+(Example/UITests) runs the in-app flows: consent, identify and reset, opt-out, server errors,
 offline queue with a kill and relaunch, cold and warm deep links, session rotation. Deep links go
 through XCUIApplication.open, because simctl openurl stops at an "Open in …?" confirmation.
 
@@ -22,7 +22,7 @@ import time
 import urllib.request
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-EXAMPLE = os.path.join(REPO, "ios", "Example")
+EXAMPLE = os.path.join(REPO, "Example")
 PROJECT = os.path.join(EXAMPLE, "SfereExample.xcodeproj")
 BUNDLE_ID = "io.sfere.example"
 DEVICE_NAME = "Sfere Flows iPhone 16"
