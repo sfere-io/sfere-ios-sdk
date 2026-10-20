@@ -50,6 +50,21 @@ final class ConfigurationTests: XCTestCase {
         XCTAssertFalse(emptyKey.isActive)
     }
 
+    /// The only test that touches the shared instance: it stays set for the rest of the process.
+    /// An empty key keeps it inactive, so no pipeline starts and nothing is sent.
+    func testSetupCreatesTheSharedInstanceOnce() {
+        XCTAssertFalse(Sfere.shared.isActive, "before setup, shared ignores calls")
+        Sfere.shared.track("view_item")
+
+        let first = Sfere.setup(SfereConfiguration(writeKey: "", host: "https://ingest.example.com"))
+        XCTAssertTrue(Sfere.shared === first)
+
+        let second = Sfere.setup(SfereConfiguration(writeKey: uniqueWriteKey(), host: "https://ingest.example.com"))
+        XCTAssertTrue(second === first, "a second setup returns the first instance")
+        XCTAssertTrue(Sfere.shared === first)
+        XCTAssertFalse(Sfere.shared.isActive)
+    }
+
     // MARK: Requests and settings
 
     func testRequestsGetBasicAuthAndHttpOnlyForAnInsecureHost() throws {
@@ -106,6 +121,57 @@ final class ConfigurationTests: XCTestCase {
             answered.fulfill()
         }.resume()
         wait(for: [answered], timeout: 2)
+    }
+
+    func testALocalTaskRunsItsWorkOnce() {
+        let ran = expectation(description: "local work ran")
+        ran.assertForOverFulfill = true
+        let task = SfereSessionTask { ran.fulfill() }
+        XCTAssertEqual(task.state, .suspended)
+        task.resume()
+        task.resume()
+        wait(for: [ran], timeout: 2)
+    }
+
+    func testURLSessionUploaderHandsBackASuspendedTask() {
+        let uploader = URLSessionUploader()
+        let request = URLRequest(url: URL(string: "https://ingest.example.com/v1/batch/b")!)
+        let task = uploader.upload(request, body: Data("{}".utf8)) { _, _, _ in }
+        // The base library resumes it; until then nothing is sent.
+        XCTAssertEqual(task.state, .suspended)
+        uploader.invalidate()
+    }
+
+    func testFileUploadsPassTheFileBodyToTheUploader() throws {
+        let uploader = CapturingUploader()
+        let session = SfereHTTPSession(settingsData: Data(), uploader: uploader)
+        let request = URLRequest(url: URL(string: "https://ingest.example.com/v1/batch/b")!)
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("sfere-batch-\(UUID().uuidString).json")
+        try Data(#"{"batch":[]}"#.utf8).write(to: file)
+        defer { try? FileManager.default.removeItem(at: file) }
+
+        let sent = expectation(description: "upload answered")
+        session.uploadTask(with: request, fromFile: file) { _, _, error in
+            XCTAssertNil(error)
+            sent.fulfill()
+        }.resume()
+        wait(for: [sent], timeout: 2)
+        XCTAssertEqual(uploader.requests.map(\.body), [Data(#"{"batch":[]}"#.utf8)])
+    }
+
+    func testAMissingBatchFileIsAnErrorNotAnUpload() {
+        let uploader = CapturingUploader()
+        let session = SfereHTTPSession(settingsData: Data(), uploader: uploader)
+        let request = URLRequest(url: URL(string: "https://ingest.example.com/v1/batch/b")!)
+        let missing = FileManager.default.temporaryDirectory.appendingPathComponent("sfere-missing-\(UUID().uuidString).json")
+
+        let failed = expectation(description: "upload failed")
+        session.uploadTask(with: request, fromFile: missing) { _, _, error in
+            XCTAssertEqual((error as? URLError)?.code, .cannotOpenFile)
+            failed.fulfill()
+        }.resume()
+        wait(for: [failed], timeout: 2)
+        XCTAssertTrue(uploader.requests.isEmpty)
     }
 
     // MARK: E-commerce

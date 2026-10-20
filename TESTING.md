@@ -8,7 +8,7 @@ Ready for internal testing. Version `0.1.0-beta.1`, not tagged yet: an admin cre
 
 | Area | State |
 |---|---|
-| iOS SDK | 40 unit tests pass. Runs in the sample app on the iOS Simulator, and every simulator flow passes (see [Simulator flows](#5-simulator-flows-automated)). |
+| iOS SDK | 45 unit tests pass. Runs in the sample app on the iOS Simulator, and every simulator flow passes (see [Simulator flows](#5-simulator-flows-automated)). |
 | Same payload as Android | The shared parity scenario matches field by field (`tools/parity.sh`). |
 | Staging | Not tested against the real ingestion endpoint yet. Everything so far runs against a local mock. |
 | CI | Every pull request runs Swift style, Static analysis, Build, API contract, Tests & coverage and SonarQube ([`docs/ci-cd.md`](docs/ci-cd.md)). The simulator flows and the parity check still run by hand. |
@@ -30,7 +30,7 @@ All commands below run from the repository root. In VS Code, the same commands a
 swift test
 ```
 
-Expected: `Executed 40 tests, with 0 failures`.
+Expected: `Executed 45 tests, with 0 failures`.
 
 ### 2. Same payload as Android
 
