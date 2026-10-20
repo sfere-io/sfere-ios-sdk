@@ -1,0 +1,32 @@
+version: 2
+updates:
+  - package-ecosystem: swift
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "swift"]
+    groups:
+      swift-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # The base library's version is part of the wire contract (context.library.base)
+      # and is mirrored in the Android SDK's plan: bump it deliberately, not by bot.
+      - dependency-name: "github.com/segmentio/analytics-swift"
+  # Keeps the action SHAs current. The two CI container images (the Swift toolchain
+  # for swift-format, SwiftLint) are pinned by digest in ci.yml and moved by hand
+  # (docs/ci-cd.md, "Tool versions").
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "github_actions"]
+    groups:
+      actions:
+        patterns:
+          - "*"

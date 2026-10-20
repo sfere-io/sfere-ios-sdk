@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/sfere-io/sfere-ios-sdk/security/policy
+    about: Report security issues privately to the maintainers — never in a public issue (see SECURITY.md).
+  - name: Testing guide
+    url: https://github.com/sfere-io/sfere-ios-sdk/blob/main/TESTING.md
+    about: How to run the tests, the mock ingestion server, the sample app and the simulator flows.

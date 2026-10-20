@@ -1,0 +1,29 @@
+# Code owners for sfere-io/sfere-ios-sdk.
+#
+# Format: <pattern>   <owner> [<owner> ...]
+# Last matching pattern wins. Required review from code owners is enforced by the
+# "protect-main" ruleset: a pull request touching a listed path can only merge
+# once one of its owners has approved. Paths with no owner here still need the
+# ruleset's one approval from any collaborator.
+#
+# The owners are the SDK maintainers. When a GitHub team exists for them, replace
+# the logins with the team (@sfere-io/<team>), as sfere-io/apis does.
+
+# Sensitive paths: what CI runs, how the package is resolved and released, and
+# what every event carries on the wire. A maintainer approves these.
+/.github/                       @mabumusa1 @KaramYaaqba
+/.githooks/                     @mabumusa1 @KaramYaaqba
+/Package.swift                  @mabumusa1 @KaramYaaqba
+/Package.resolved               @mabumusa1 @KaramYaaqba
+/Sources/SfereAnalytics/Support.swift @mabumusa1 @KaramYaaqba
+/Sources/SfereAnalytics/PrivacyInfo.xcprivacy @mabumusa1 @KaramYaaqba
+/api/                           @mabumusa1 @KaramYaaqba
+/fixtures/                      @mabumusa1 @KaramYaaqba
+/tools/api_dump.py              @mabumusa1 @KaramYaaqba
+/tools/api_dump.sh              @mabumusa1 @KaramYaaqba
+/.swift-format                  @mabumusa1 @KaramYaaqba
+/.swiftlint.yml                 @mabumusa1 @KaramYaaqba
+/sonar-project.properties       @mabumusa1 @KaramYaaqba
+/SECURITY.md                    @mabumusa1 @KaramYaaqba
+/CONTRIBUTING.md                @mabumusa1 @KaramYaaqba
+/docs/ci-cd.md                  @mabumusa1 @KaramYaaqba

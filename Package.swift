@@ -13,19 +13,19 @@ let package = Package(
         .macOS(.v12),
     ],
     products: [
-        .library(name: "SfereAnalytics", targets: ["SfereAnalytics"]),
+        .library(name: "SfereAnalytics", targets: ["SfereAnalytics"])
     ],
     dependencies: [
-        .package(url: "https://github.com/segmentio/analytics-swift.git", .upToNextMinor(from: "1.10.1")),
+        .package(url: "https://github.com/segmentio/analytics-swift.git", .upToNextMinor(from: "1.10.1"))
     ],
     targets: [
         .target(
             name: "SfereAnalytics",
             dependencies: [
-                .product(name: "Segment", package: "analytics-swift"),
+                .product(name: "Segment", package: "analytics-swift")
             ],
             resources: [
-                .process("PrivacyInfo.xcprivacy"),
+                .process("PrivacyInfo.xcprivacy")
             ]
         ),
         .testTarget(

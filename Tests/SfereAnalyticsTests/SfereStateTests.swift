@@ -1,5 +1,6 @@
 import Foundation
 import XCTest
+
 @testable import SfereAnalytics
 
 final class SfereStateTests: XCTestCase {

@@ -1,0 +1,45 @@
+# SwiftLint configuration for the Sfere iOS SDK.
+# Built on SwiftLint's default rules: only the differences are listed here. CI's
+# "Static analysis" job runs `swiftlint lint --strict` on every pull request and fails
+# on any finding. No baseline: fix or disable inline with a reason
+# (`// swiftlint:disable:next rule_name - why`). Thresholds follow the Android SDK's
+# detekt configuration, so both SDKs are held to the same limits.
+
+included:
+  - Package.swift
+  - Sources
+  - Tests
+  - Example
+
+excluded:
+  - .build
+  - build
+  - Example/SfereExample.xcodeproj
+
+disabled_rules:
+  # Layout belongs to swift-format (.swift-format, the "Swift style" job). These rules
+  # disagree with it about where braces and commas go, so they are off here.
+  - opening_brace
+  - trailing_comma
+
+line_length:
+  # Same limit as .swift-format and the Android SDK.
+  warning: 140
+  ignores_urls: true
+  ignores_comments: true
+
+function_body_length:
+  # The Android SDK's LongMethod threshold. Setup wires the base library in one place;
+  # the parity test runs one scenario end to end.
+  warning: 80
+
+cyclomatic_complexity:
+  # JSON conversion and the wire sanitizer are one `switch` per type or key; splitting
+  # them hides the shape. Same threshold as the Android SDK's CyclomaticComplexMethod.
+  warning: 20
+
+identifier_name:
+  excluded:
+    # Argument labels that read as English at the call site: setSwitch("Opt out", on: true).
+    - id
+    - on

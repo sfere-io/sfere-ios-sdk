@@ -1,6 +1,7 @@
 import Foundation
 import Segment
 import XCTest
+
 @testable import SfereAnalytics
 
 final class ConfigurationTests: XCTestCase {
@@ -16,8 +17,10 @@ final class ConfigurationTests: XCTestCase {
     }
 
     func testRejectedHosts() {
-        for bad in ["", "ingest.example.com", "ftp://ingest.example.com", "https://ingest.example.com/v1",
-                    "https://ingest.example.com?x=1", "https://ingest.example.com#f", "https://user@ingest.example.com"] {
+        for bad in [
+            "", "ingest.example.com", "ftp://ingest.example.com", "https://ingest.example.com/v1",
+            "https://ingest.example.com?x=1", "https://ingest.example.com#f", "https://user@ingest.example.com",
+        ] {
             if case .success = SfereHost.validate(bad, allowInsecure: true) {
                 XCTFail("accepted \(bad)")
             }
@@ -58,7 +61,8 @@ final class ConfigurationTests: XCTestCase {
         XCTAssertEqual(shaped.url?.scheme, "https")
 
         let insecure = try SfereHost.validate("http://127.0.0.1:4311", allowInsecure: true).get()
-        XCTAssertEqual(SfereRequests.shape(original, writeKey: "key:secret", host: insecure).url?.absoluteString, "http://127.0.0.1:4311/v1/batch/b")
+        XCTAssertEqual(
+            SfereRequests.shape(original, writeKey: "key:secret", host: insecure).url?.absoluteString, "http://127.0.0.1:4311/v1/batch/b")
     }
 
     func testInlineSettingsCarryOurApiHostAndNoMetrics() throws {
@@ -112,10 +116,11 @@ final class ConfigurationTests: XCTestCase {
             currency: "SAR",
             value: 256.96,
             items: [
-                SfereItem(itemId: "sku_12345", itemName: "Away Jersey", price: 89.99, quantity: 2,
-                          itemBrand: "Al-Hilal", itemCategories: ["Apparel", "Jerseys"], itemVariant: "XL",
-                          itemListId: "related", itemListName: "Related products", index: 3, coupon: "SUMMER20",
-                          discount: 10, affiliation: "Riyadh store", locationId: "ChIJ1", extra: ["image_url": "https://x/y.png"]),
+                SfereItem(
+                    itemId: "sku_12345", itemName: "Away Jersey", price: 89.99, quantity: 2,
+                    itemBrand: "Al-Hilal", itemCategories: ["Apparel", "Jerseys"], itemVariant: "XL",
+                    itemListId: "related", itemListName: "Related products", index: 3, coupon: "SUMMER20",
+                    discount: 10, affiliation: "Riyadh store", locationId: "ChIJ1", extra: ["image_url": "https://x/y.png"])
             ],
             tax: 16.99,
             shipping: 10,
@@ -123,13 +128,16 @@ final class ConfigurationTests: XCTestCase {
             dedupId: "order_98765"
         )
         let properties = purchase.properties
-        XCTAssertEqual(Set(properties.keys), ["transaction_id", "currency", "value", "items", "tax", "shipping", "coupon", "sfere_dedup_id"])
+        XCTAssertEqual(
+            Set(properties.keys), ["transaction_id", "currency", "value", "items", "tax", "shipping", "coupon", "sfere_dedup_id"])
         let item = try XCTUnwrap((properties["items"] as? [[String: Any]])?.first)
-        XCTAssertEqual(Set(item.keys), [
-            "item_id", "item_name", "price", "quantity", "item_brand", "item_category", "item_category2",
-            "item_variant", "item_list_id", "item_list_name", "index", "coupon", "discount", "affiliation",
-            "location_id", "image_url",
-        ])
+        XCTAssertEqual(
+            Set(item.keys),
+            [
+                "item_id", "item_name", "price", "quantity", "item_brand", "item_category", "item_category2",
+                "item_variant", "item_list_id", "item_list_name", "index", "coupon", "discount", "affiliation",
+                "location_id", "image_url",
+            ])
         XCTAssertEqual(item["item_category2"] as? String, "Jerseys")
     }
 
@@ -140,7 +148,9 @@ final class ConfigurationTests: XCTestCase {
     }
 
     func testUnsupportedValuesAreDroppedNotFatal() {
-        let clean = JSONValues.sanitize(["ok": 1, "nan": Double.nan, "object": NSObject(), "nested": ["date": Date(timeIntervalSince1970: 0)]])
+        let clean = JSONValues.sanitize([
+            "ok": 1, "nan": Double.nan, "object": NSObject(), "nested": ["date": Date(timeIntervalSince1970: 0)],
+        ])
         XCTAssertNotNil(clean?["ok"])
         XCTAssertNil(clean?["nan"])
         XCTAssertNil(clean?["object"])

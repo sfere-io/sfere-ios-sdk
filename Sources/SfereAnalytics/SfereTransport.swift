@@ -1,5 +1,6 @@
 import Foundation
 import Segment
+
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
@@ -16,7 +17,7 @@ enum SfereSettings {
                     "apiKey": writeKey,
                     // Must be ours: the upload destination adopts whatever apiHost settings carry.
                     "apiHost": apiHost,
-                ],
+                ]
             ],
             "plan": [
                 "track": ["__default": ["enabled": true]],
@@ -40,7 +41,8 @@ enum SfereSettings {
 
 /// Sends one upload request. The default uses URLSession; tests capture requests instead.
 protocol SfereUploader: AnyObject {
-    func upload(_ request: URLRequest, body: Data, completion: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void) -> SfereSessionTask
+    func upload(_ request: URLRequest, body: Data, completion: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void)
+        -> SfereSessionTask
     func invalidate()
 }
 
@@ -53,7 +55,9 @@ final class URLSessionUploader: SfereUploader {
         session = URLSession(configuration: configuration)
     }
 
-    func upload(_ request: URLRequest, body: Data, completion: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void) -> SfereSessionTask {
+    func upload(_ request: URLRequest, body: Data, completion: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void)
+        -> SfereSessionTask
+    {
         let task = session.uploadTask(with: request, from: body, completionHandler: completion)
         return SfereSessionTask(underlying: task)
     }
@@ -82,7 +86,8 @@ final class SfereSessionTask: UploadTask {
 
     var state: URLSessionTask.State {
         if let underlying { return underlying.state }
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return localState
     }
 
@@ -92,7 +97,10 @@ final class SfereSessionTask: UploadTask {
             return
         }
         lock.lock()
-        guard localState == .suspended else { lock.unlock(); return }
+        guard localState == .suspended else {
+            lock.unlock()
+            return
+        }
         localState = .running
         lock.unlock()
         // Strong capture on purpose: the base library drops its reference to the settings task
@@ -125,7 +133,9 @@ final class SfereHTTPSession: HTTPSession {
         self.uploader = uploader
     }
 
-    func dataTask(with request: URLRequest, completionHandler: @escaping @Sendable (Data?, URLResponse?, (any Error)?) -> Void) -> SfereSessionTask {
+    func dataTask(with request: URLRequest, completionHandler: @escaping @Sendable (Data?, URLResponse?, (any Error)?) -> Void)
+        -> SfereSessionTask
+    {
         let data = settingsData
         return SfereSessionTask {
             let response = request.url.flatMap {
@@ -135,14 +145,18 @@ final class SfereHTTPSession: HTTPSession {
         }
     }
 
-    func uploadTask(with request: URLRequest, fromFile file: URL, completionHandler: @escaping @Sendable (Data?, URLResponse?, (any Error)?) -> Void) -> SfereSessionTask {
+    func uploadTask(
+        with request: URLRequest, fromFile file: URL, completionHandler: @escaping @Sendable (Data?, URLResponse?, (any Error)?) -> Void
+    ) -> SfereSessionTask {
         guard let body = try? Data(contentsOf: file) else {
             return SfereSessionTask { completionHandler(nil, nil, URLError(.cannotOpenFile)) }
         }
         return uploader.upload(request, body: body, completion: completionHandler)
     }
 
-    func uploadTask(with request: URLRequest, from bodyData: Data?, completionHandler: @escaping @Sendable (Data?, URLResponse?, (any Error)?) -> Void) -> SfereSessionTask {
+    func uploadTask(
+        with request: URLRequest, from bodyData: Data?, completionHandler: @escaping @Sendable (Data?, URLResponse?, (any Error)?) -> Void
+    ) -> SfereSessionTask {
         uploader.upload(request, body: bodyData ?? Data(), completion: completionHandler)
     }
 

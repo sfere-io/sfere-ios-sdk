@@ -1,6 +1,7 @@
 import Foundation
 import Segment
 import XCTest
+
 @testable import SfereAnalytics
 
 final class PluginTests: XCTestCase {
@@ -31,9 +32,12 @@ final class PluginTests: XCTestCase {
     }
 
     func testDeepLinkPropertiesAreRenamed() {
-        let renamed = LifecycleRenamePlugin().execute(event: trackEvent("Deep Link Opened", properties: [
-            "url": "sfereexample://p", "sourceApplication": "com.apple.mobilesafari",
-        ]))
+        let renamed = LifecycleRenamePlugin().execute(
+            event: trackEvent(
+                "Deep Link Opened",
+                properties: [
+                    "url": "sfereexample://p", "sourceApplication": "com.apple.mobilesafari",
+                ]))
         let properties = renamed?.properties?.dictionaryValue
         XCTAssertEqual(properties?["referring_application"] as? String, "com.apple.mobilesafari")
         XCTAssertNil(properties?["sourceApplication"])
@@ -97,7 +101,8 @@ final class PluginTests: XCTestCase {
     func testSanitizerRemovesWhatMustNotReachTheWire() throws {
         var event = trackEvent("view_item")
         event.integrations = try JSON([String: Any]())
-        event._metadata = try JSONDecoder().decode(DestinationMetadata.self, from: Data(#"{"bundled":[],"unbundled":["X"],"bundledIds":[]}"#.utf8))
+        event._metadata = try JSONDecoder().decode(
+            DestinationMetadata.self, from: Data(#"{"bundled":[],"unbundled":["X"],"bundledIds":[]}"#.utf8))
         event.context = try JSON([
             "instanceId": "abc",
             "referrer": ["url": "sfereexample://p"],

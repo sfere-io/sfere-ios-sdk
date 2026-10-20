@@ -1,11 +1,11 @@
 # Sfere iOS SDK
 
-The Sfere iOS SDK. It collects first-party fan events in iOS apps and sends them to the Sfere ingestion endpoint. It wraps Segment's open-source `analytics-swift` unmodified, the same library Jitsu uses. Sfere's behaviour is added on top as plugins.
+The Sfere iOS SDK. It collects first-party fan events in iOS apps and sends them to the Sfere ingestion endpoint. It wraps Segment's open-source `analytics-swift` unmodified, the same library the ingestion platform uses. Sfere's behaviour is added on top as plugins.
 
-- **Sibling repo:** the Android SDK is `fanfinity/sfere-android-sdk`, checked out at `~/Desktop/Projects/sfere-android-sdk`. Until 2026-10-18 both lived in one repo, `fanfinity/sfere-mobile-sdks`, which is now deleted from GitHub. The two were split because apps integrate them differently. The old local folder `~/Desktop/Projects/sfere-mobile-sdks` was deleted too.
-- **Payload contract:** `docs/WIRE-CONTRACT.md` and `docs/EVENTS.md` in the private repo `fanfinity/sfere-sdk`. Read them with `gh api 'repos/fanfinity/sfere-sdk/contents/<path>' -H 'Accept: application/vnd.github.raw'`; `gh repo clone` fails on this machine.
-- **Plan and next steps:** `docs/mobile/sfere-mobile-sdks-plan.html` and `docs/mobile/sfere-mobile-sdks-next-steps.html` in `fanfinity/sfere-sdk`. They cover both platforms. Read them with `gh api 'repos/fanfinity/sfere-sdk/contents/docs/mobile/<file>' -H 'Accept: application/vnd.github.raw'`. Change them through a docs PR in that repo. The vendor name of the ingestion platform never appears there. Read the next-steps page at the start of every session. It has the ordered steps with their status, the user's decisions Q1–Q9, and the `#decision-record` JSON block. Copy the user's answers into that block and mark steps done there.
-- **GitHub:** private repo `fanfinity/sfere-ios-sdk`. `origin` uses HTTPS because no SSH key is loaded. Push with `git -c credential.helper='!gh auth git-credential' push`, or run `gh auth setup-git` once.
+- **Sibling repo:** the Android SDK is `sfere-io/sfere-android-sdk`, checked out at `~/Desktop/Projects/sfere-android-sdk`. Until 2026-10-18 both lived in one repo, `sfere-io/sfere-mobile-sdks`, which is now deleted from GitHub. The two were split because apps integrate them differently. The old local folder `~/Desktop/Projects/sfere-mobile-sdks` was deleted too.
+- **Payload contract:** `docs/WIRE-CONTRACT.md` and `docs/EVENTS.md` in the private repo `sfere-io/sfere-sdk`. Read them with `gh api 'repos/sfere-io/sfere-sdk/contents/<path>' -H 'Accept: application/vnd.github.raw'`; `gh repo clone` fails on this machine.
+- **Plan and next steps:** `docs/mobile/sfere-mobile-sdks-plan.html` and `docs/mobile/sfere-mobile-sdks-next-steps.html` in `sfere-io/sfere-sdk`. They cover both platforms. Read them with `gh api 'repos/sfere-io/sfere-sdk/contents/docs/mobile/<file>' -H 'Accept: application/vnd.github.raw'`. Change them through a docs PR in that repo. The vendor name of the ingestion platform never appears there. Read the next-steps page at the start of every session. It has the ordered steps with their status, the user's decisions Q1–Q9, and the `#decision-record` JSON block. Copy the user's answers into that block and mark steps done there.
+- **GitHub:** private repo `sfere-io/sfere-ios-sdk` (the organization was `fanfinity` until 2026-10-20; old URLs redirect). `context.library.name` stays `@fanfinity/sfere-ios` and the shared fixtures keep their text: both are the wire contract, shared with the Android and JS SDKs, and change only together with them. `origin` uses HTTPS because no SSH key is loaded. Push with `git -c credential.helper='!gh auth git-credential' push`, or run `gh auth setup-git` once.
 
 ## Layout
 
@@ -13,6 +13,13 @@ The Sfere iOS SDK. It collects first-party fan events in iOS apps and sends them
 |---|---|
 | `README.md` | Integration guide for app developers. |
 | `TESTING.md` | For developers and testers: status, prerequisites, and how to test (unit tests, parity, mock, sample app, simulator flows). Keep its status table and test counts current. |
+| `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md` | Pull-request policy (mirrors `sfere-io/apis` and the Android SDK), vulnerability reporting, and the changelog whose tagged section becomes the release notes. |
+| `docs/ci-cd.md` | The workflows, the required checks, the rulesets, the pinned tool versions and the release steps. Update it with every change under `.github/` or `.githooks/`. |
+| `.github/workflows/` | `ci.yml` (the gate: Swift style, Static analysis, Build, API contract, Tests & coverage, SonarQube; only Build and Tests run on macOS), `release.yml` (`v*` tag → the gate → resolve and build the tag as an app does → GitHub release). Actions pinned by commit SHA, containers by digest. |
+| `.githooks/pre-commit` | swift-format on the staged Swift, `tools/api_dump.sh` when SDK sources are staged, vendor-name check. Installed with `git config core.hooksPath .githooks`. |
+| `api/SfereAnalytics.api` | The public API dump (iOS), from the compiler's symbol graph. `tools/api_dump.sh` is its only writer (`--check` compares); CI's API contract job is the gate. |
+| `.swift-format`, `.swiftlint.yml` | Formatting (4 spaces, 140 columns) and lint rules; zero findings allowed, no baseline. Thresholds follow the Android SDK's detekt config. |
+| `sonar-project.properties` | SonarQube Cloud project `sfere-io_sfere-ios-sdk`, organization `sfere-io`; CI runs it only when `SONAR_TOKEN` exists. |
 | `Package.swift` | Package manifest. It must stay at the repo root, because SPM only installs packages whose manifest is at the root. Uses the default `Sources/` and `Tests/` paths. |
 | `Sources/SfereAnalytics/` | The SDK. `Sfere.swift` (public API), `SfereTransport.swift` (inline settings, local settings answer, Basic auth), `Plugins/SferePlugins.swift` (rename, enrichment, sanitizer), `DeepLinkParser.swift`, `SfereState.swift`, `PrivacyInfo.xcprivacy` |
 | `Tests/SfereAnalyticsTests/` | XCTest. `WireTests.swift` runs the real base library and checks the captured HTTP bodies |
@@ -20,6 +27,7 @@ The Sfere iOS SDK. It collects first-party fan events in iOS apps and sends them
 | `Example/UITests/` | XCUITest flows for phase D2 (`SampleAppFlowTests`). They read the mock's `/__events` directly. |
 | `tools/mock_ingest.mjs` | Mock ingestion endpoint for the sample app (Node, no dependencies): `/v1/batch/b`, `GET /__events`, `POST /__reset`, `POST /__fail {status, count, retryAfter}`, gzip bodies. Port 4320 or `SFERE_MOCK_PORT`. Start and stop it with `tools/mock_ingest_ctl.sh start|stop|status`. |
 | `tools/ios_flows.py` | Phase D2 driver: a dedicated simulator `Sfere Flows iPhone 16` (iOS 18.5), fresh install and upgrade through `simctl`, then the XCUITest flows. Work files go to `$TMPDIR/sfere-ios-flows`. |
+| `tools/api_dump.sh`, `tools/api_dump.py` | Build for the iOS Simulator with the symbol graph on, then write `api/SfereAnalytics.api`. |
 | `tools/parity.sh`, `tools/parity_diff.py` | Cross-repo parity check: verifies the shared files are identical in both repos, runs both parity tests, and compares the upload bodies key by key. Exits non-zero on any difference. |
 | `fixtures/` | `deeplinks.json` (URL → `clientIds` / `campaign`) and `event-names.json` (base names → Sfere names). The Android repo has an identical copy. |
 
@@ -34,7 +42,10 @@ The Sfere iOS SDK. It collects first-party fan events in iOS apps and sends them
 | Simulator flows (heavy: check memory first) | `python3 -I tools/ios_flows.py` (`--only-testing <test>`, `--skip-ui-tests`, `--keep-booted`). Shuts the simulator down and stops the mock if it started it. | `iOS: simulator flows` |
 | iOS vs Android payloads | `tools/parity.sh` (needs `../sfere-android-sdk`, or `SFERE_ANDROID_SDK_DIR`). It runs Gradle, so stop the daemons after with `./gradlew --stop` in the Android repo. | `Parity: compare iOS and Android payloads` |
 
-- `Package.resolved` is committed.
+- `Package.resolved` is committed and pins every dependency to a revision; CI builds with `--force-resolved-versions`.
+- **Version:** `SfereVersion.current` in `Sources/SfereAnalytics/Support.swift` is the only place the SDK version lives (`0.1.0-beta.1`). It becomes `context.library.version` and the tag `vVERSION`; SwiftPM installs from that tag. A tagged version is immutable: bump it before changing the SDK again (CI's "API contract" job fails otherwise), and add the `CHANGELOG.md` entry under `## [Unreleased]`.
+- **Warnings are errors:** CI builds with `SWIFT_TREAT_WARNINGS_AS_ERRORS=YES`, swift-format and SwiftLint run `--strict`. Fix the cause; disable a rule inline only with a reason in the comment.
+- **Public API is a contract:** any change to what `import SfereAnalytics` exposes shows up as a diff of `api/SfereAnalytics.api` (run `tools/api_dump.sh` on a Mac, commit the dump, review the diff). Keep the Android SDK's API in step.
 - The tests use write keys starting with `sferetest`. The base library makes a UserDefaults suite per key, and the tests delete those suites in `removeTestPreferenceSuites()`. cfprefsd sometimes writes a few empty 42-byte suite files back after the test ends; the next run's class `setUp` deletes them. Never widen the sweep beyond the `sferetest` prefix.
 
 ## Rules the code follows
@@ -78,10 +89,10 @@ These files are shared and must stay byte-identical in both repos: `fixtures/dee
 ## Decisions (2026-10-13 to 18)
 
 - **Separate repos (2026-10-18):** iOS and Android are separate repos because apps integrate them differently. The combined repo was deleted.
-- **Distribution:** private during beta (private SPM repo), then public (SPM) at 1.0.0.
+- **Distribution:** private during beta (private SPM repo), then public (SPM) at 1.0.0. **CI/CD added 2026-10-20** on the `sfere-io/apis` and Android SDK model: named required checks, rulesets without bypass, Dependabot, SHA-pinned actions, a tag-triggered release that resolves and builds the tag as an app would before cutting the GitHub release (`docs/ci-cd.md`). The cross-repo parity job and a simulator-flows job are still open.
 - **Push tracking:** not in v1; it comes in v1.1.
 - **Platform context (Q2, 2026-10-15):** keep everything the base library adds: `app`, `device` (without `id`), `os`, `locale`, `timezone`, `userAgent`, `screen`, `network`.
-- **2026-10-15 answers (Q3–Q9 in the next-steps page):** native UI tests (XCUITest); advertising IDs in v1 but off by default (`collectAdvertisingId`); GitHub Actions on every PR; Claude opens a PR for the contract docs in `fanfinity/sfere-sdk`; beta pilot app `sfere-sdk-demo`. (Q3 said "one private repo"; the 2026-10-18 split replaces it.)
+- **2026-10-15 answers (Q3–Q9 in the next-steps page):** native UI tests (XCUITest); advertising IDs in v1 but off by default (`collectAdvertisingId`); GitHub Actions on every PR; Claude opens a PR for the contract docs in `sfere-io/sfere-sdk`; beta pilot app `sfere-sdk-demo`. (Q3 said "one private repo"; the 2026-10-18 split replaces it.)
 - **React Native:** the React Native SDK will wrap this SDK and the Android one.
 - **Minimum OS:** iOS 15.
 
@@ -90,4 +101,4 @@ These files are shared and must stay byte-identical in both repos: `fixtures/dee
 - **Spike B (Q1, open):** send real events to staging `/v1/batch/b` with a browser key, and check gzip support. This needs a staging host and key.
 - **`debug` option:** the README and `SfereConfiguration` say debug mode prints every payload, but the SDK prints none. Decide whether to add payload logging (on both platforms) or fix the docs.
 - **Simulator context:** `context.network` is all false and `device.model` is `arm64` on the simulator; check both on a real device before deciding anything from them.
-- **Next round:** advertising IDs, CI.
+- **Next round:** advertising IDs, the first beta tag (`v0.1.0-beta.1`, an admin creates it on `main`), the SonarQube Cloud project and its `SONAR_TOKEN`, a macOS job for the simulator flows, a parity job that checks out `sfere-android-sdk`.

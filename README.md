@@ -1,5 +1,8 @@
 # Sfere iOS SDK
 
+[![CI](https://github.com/sfere-io/sfere-ios-sdk/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sfere-io/sfere-ios-sdk/actions/workflows/ci.yml)
+[![Release](https://github.com/sfere-io/sfere-ios-sdk/actions/workflows/release.yml/badge.svg)](https://github.com/sfere-io/sfere-ios-sdk/actions/workflows/release.yml)
+
 Collect first-party fan events in your iOS app and send them to Sfere. It sends the same payload and event names as the Sfere browser and server SDKs, so the same reports and ad-platform destinations work for web and app.
 
 - Swift Package: `SfereAnalytics`
@@ -9,19 +12,19 @@ Collect first-party fan events in your iOS app and send them to Sfere. It sends 
 
 ## Install
 
-> **Not yet published.** No release exists yet: the repository is private and has no release tag yet, so the steps below describe the planned install path for the beta.
+> **Beta.** The repository is private and the first tag is `v0.1.0-beta.1`. Releases and their notes: [Releases](https://github.com/sfere-io/sfere-ios-sdk/releases); how a version is cut: [`docs/ci-cd.md`](docs/ci-cd.md).
 
 In Xcode, choose **File → Add Package Dependencies…**, enter this repository's URL and add the `SfereAnalytics` product to your app target.
 
 Or add it in `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/fanfinity/sfere-ios-sdk.git", from: "0.1.0"),
+.package(url: "https://github.com/sfere-io/sfere-ios-sdk.git", exact: "0.1.0-beta.1"),
 // target dependency:
 .product(name: "SfereAnalytics", package: "sfere-ios-sdk"),
 ```
 
-During the beta the repository is private, so Xcode needs a GitHub account with access to it.
+During the beta the repository is private, so Xcode needs a GitHub account with access to it, and a beta is pinned with `exact:` (a `from:` range skips pre-releases). From 1.0.0, use `from: "1.0.0"`.
 
 ## Set up
 

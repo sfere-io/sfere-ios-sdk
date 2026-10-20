@@ -1,0 +1,31 @@
+name: Chore
+description: Repo upkeep — tooling, CI, dependencies, docs, release process
+labels: ["type:chore", "status:triage"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What needs doing
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What is broken, slow, confusing, or missing today?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CI / GitHub workflows
+        - Release / tags
+        - Dependencies
+        - Documentation
+        - Tooling (swift-format, SwiftLint, API dump, hooks)
+        - Parity with the Android SDK
+        - Other
+    validations:
+      required: true

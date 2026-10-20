@@ -1,5 +1,6 @@
 import Foundation
 import XCTest
+
 @testable import SfereAnalytics
 
 final class FakeClock: SfereClock {
@@ -31,13 +32,16 @@ final class CapturingUploader: SfereUploader {
     private var captured = [Captured]()
 
     var requests: [Captured] {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return captured
     }
 
     var events: [[String: Any]] { requests.flatMap(\.events) }
 
-    func upload(_ request: URLRequest, body: Data, completion: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void) -> SfereSessionTask {
+    func upload(_ request: URLRequest, body: Data, completion: @escaping @Sendable (Data?, URLResponse?, Error?) -> Void)
+        -> SfereSessionTask
+    {
         lock.lock()
         captured.append(Captured(request: request, body: body))
         lock.unlock()
@@ -53,9 +57,9 @@ final class CapturingUploader: SfereUploader {
 enum Fixtures {
     /// `fixtures/` at the repository root, found from this file's location.
     static let directory: URL = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent()   // SfereAnalyticsTests
-        .deletingLastPathComponent()   // Tests
-        .deletingLastPathComponent()   // repository root
+        .deletingLastPathComponent()  // SfereAnalyticsTests
+        .deletingLastPathComponent()  // Tests
+        .deletingLastPathComponent()  // repository root
         .appendingPathComponent("fixtures")
 
     static func json(_ name: String) throws -> [String: Any] {

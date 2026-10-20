@@ -1,0 +1,77 @@
+#!/bin/sh
+#
+# Pre-commit hook:
+#   1. refuse a commit whose staged files name the ingestion vendor (company rule:
+#      say "ingestion endpoint");
+#   2. run swift-format on the staged Swift files and re-stage what it rewrote;
+#   3. regenerate the public API dump (api/SfereAnalytics.api) and stage it when the
+#      SDK's sources are staged, aborting the commit if the dump fails (the code does
+#      not compile).
+#
+# CI's "Swift style" and "API contract" jobs are the real gates; this is fast
+# feedback at commit time. SwiftLint and the tests stay CI-and-on-demand.
+#
+# Install once per clone:
+#
+#     git config core.hooksPath .githooks
+#
+# Steps 2 and 3 need Xcode (swift-format ships with it; the dump compiles for the iOS
+# Simulator). Without Xcode they are skipped with a note, and CI catches what they would
+# have. `git commit --no-verify` skips the hook.
+
+set -e
+
+cd "$(git rev-parse --show-toplevel)"
+
+# --- vendor names -----------------------------------------------------------
+# Staged content only (the index, not the working tree).
+# Spelled in pieces so this file does not match its own check.
+vendor_pattern='jit''su|air''byte|click''house'
+staged="$(git diff --cached --name-only --diff-filter=ACMR)"
+if [ -n "$staged" ]; then
+    hits="$(printf '%s\n' "$staged" | while IFS= read -r f; do
+        git show ":$f" | grep -n -i -E "$vendor_pattern" | sed "s|^|$f:|" || true
+    done)"
+    if [ -n "$hits" ]; then
+        printf '%s\n' "$hits" >&2
+        echo "pre-commit: the ingestion vendor is named above. Say 'ingestion endpoint' (rule in CLAUDE.md)." >&2
+        exit 1
+    fi
+fi
+
+# --- Swift style ------------------------------------------------------------
+if ! git diff --cached --quiet --diff-filter=ACMR -- '*.swift'; then
+    if command -v xcrun > /dev/null 2>&1 && xcrun --find swift-format > /dev/null 2>&1; then
+        swift_format="xcrun swift-format"
+    elif command -v swift > /dev/null 2>&1 && swift format --version > /dev/null 2>&1; then
+        swift_format="swift format"
+    else
+        swift_format=""
+        echo "pre-commit: swift-format not found; formatting skipped (CI's 'Swift style' job checks it)." >&2
+    fi
+    if [ -n "$swift_format" ]; then
+        # Re-stage the (possibly rewritten) files so the commit holds the formatted code.
+        # Working-tree semantics: unstaged hunks of these files are staged along with them.
+        git diff --cached --name-only --diff-filter=ACMR -z -- '*.swift' \
+            | xargs -0 $swift_format format --in-place --
+        git diff --cached --name-only --diff-filter=ACMR -z -- '*.swift' \
+            | xargs -0 git add --
+    fi
+fi
+
+# --- public API dump ----------------------------------------------------------
+# api/SfereAnalytics.api is generated, and tools/api_dump.sh is its only writer. When
+# the SDK's sources are staged, regenerate it and stage the result, so the commit carries
+# a dump that matches its code (CI's "API contract" job fails on a stale one).
+if ! git diff --cached --quiet --diff-filter=ACMRD -- 'Sources/*' Package.swift Package.resolved; then
+    if command -v xcodebuild > /dev/null 2>&1; then
+        if ! tools/api_dump.sh > /dev/null; then
+            echo "pre-commit: tools/api_dump.sh failed, so the public API dump cannot be regenerated." >&2
+            echo "pre-commit: fix the error above (run: tools/api_dump.sh) and commit again." >&2
+            exit 1
+        fi
+        git add -- api/
+    else
+        echo "pre-commit: no Xcode; the public API dump was not regenerated (CI's 'API contract' job checks it)." >&2
+    fi
+fi

@@ -1,0 +1,345 @@
+name: ci
+
+# The quality gate. Pull requests: every job below must pass before merging (the
+# "protect-main" ruleset lists them as required checks). Pushes to main: the same
+# run. workflow_call: release.yml reuses the whole gate before it releases, so a
+# release can never ship code that did not pass the checks every PR passes.
+#
+# Jobs, and the gate each one is (docs/ci-cd.md has the long version):
+#   Swift style       swift-format lint, the formatting the pre-commit hook applies
+#   Static analysis   SwiftLint (every warning is an error)
+#   Build             the SDK for the iOS Simulator and for devices, warnings as errors;
+#                     the sample app and its UI tests; the public API dump
+#   API contract      the public API dump, the version/CHANGELOG rules, no vendor names
+#   Tests & coverage  the XCTest suite with code coverage
+#   SonarQube         SonarQube Cloud analysis of that coverage (skipped without SONAR_TOKEN)
+#
+# Runners: only Build and Tests & coverage need Xcode, so only they run on macOS
+# (macOS minutes cost ten times Linux minutes on a private repository). Style and
+# static analysis run in pinned Linux containers; the rest on ubuntu-latest.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  style:
+    name: Swift style
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # swift-format ships with the toolchain. The image is pinned by digest, so the
+    # formatter version only moves when this line does (docs/ci-cd.md, "Tool versions").
+    container: swift:6.4.1-noble@sha256:19cbe56bdaec1918f7cf5fdeba42b9bd55bdd8a6149c9990d0e0e3a89a127d63
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: swift-format
+        run: |
+          swift format --version
+          swift format lint --strict --recursive --parallel Package.swift Sources Tests Example
+
+  analysis:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container: ghcr.io/realm/swiftlint:0.65.1@sha256:f47e083201e47a136cda5ae847595bfe00226c444ca226fa74fa5dc648a9b057
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: SwiftLint
+        run: |
+          swiftlint version
+          swiftlint lint --strict --quiet --reporter github-actions-logging
+
+  build:
+    name: Build
+    runs-on: macos-26
+    timeout-minutes: 40
+    env:
+      XCODEGEN_VERSION: 2.46.0
+      # sha256 of xcodegen.zip from the release's asset digest.
+      XCODEGEN_SHA256: 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+      # Package.resolved pins every dependency to a revision. CI builds exactly those
+      # revisions and fails if the manifest needs a different resolution.
+      - name: Manifest and pinned dependencies
+        run: |
+          swift package dump-package > /dev/null
+          swift package resolve --force-resolved-versions
+          git diff --exit-code -- Package.resolved
+      - name: SDK for the iOS Simulator, and the public API dump
+        run: |
+          mkdir -p build/ci
+          tools/api_dump.sh --output build/ci/SfereAnalytics.api
+      - name: SDK for iOS devices (Release)
+        run: |
+          xcodebuild build -quiet \
+            -scheme SfereAnalytics \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            -derivedDataPath .build/ci-device \
+            -onlyUsePackageVersionsFromResolvedFile \
+            SWIFT_TREAT_WARNINGS_AS_ERRORS=YES CODE_SIGNING_ALLOWED=NO
+      - name: Install XcodeGen
+        run: |
+          curl -fsSL --proto '=https' -o "$RUNNER_TEMP/xcodegen.zip" \
+            "https://github.com/yonaskolb/XcodeGen/releases/download/${XCODEGEN_VERSION}/xcodegen.zip"
+          echo "${XCODEGEN_SHA256}  $RUNNER_TEMP/xcodegen.zip" | shasum -a 256 --check --strict
+          unzip -q "$RUNNER_TEMP/xcodegen.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/xcodegen/bin" >> "$GITHUB_PATH"
+      # The sample app is the first consumer of the package: if it builds, an app can
+      # add the package and link it. Its UI tests are compiled, not run (docs/ci-cd.md).
+      - name: Sample app and its UI tests
+        run: |
+          xcodegen generate --spec Example/project.yml --quiet
+          xcodebuild build-for-testing -quiet \
+            -project Example/SfereExample.xcodeproj \
+            -scheme SfereExample \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath .build/ci-example \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Verify what an app gets
+        run: |
+          APP="$(find .build/ci-example/Build/Products -maxdepth 2 -name 'SfereExample.app' -type d | head -n 1)"
+          [ -n "$APP" ] || { echo "::error::The sample app was not built."; exit 1; }
+          MANIFEST="$(find "$APP" -path '*SfereAnalytics*.bundle/PrivacyInfo.xcprivacy' | head -n 1)"
+          [ -n "$MANIFEST" ] || { echo "::error::The app does not carry the SDK's privacy manifest (PrivacyInfo.xcprivacy)."; exit 1; }
+          plutil -lint "$MANIFEST"
+          {
+            echo "### What an app gets"
+            echo
+            echo "Privacy manifest: \`${MANIFEST#"$APP"/}\`"
+            echo
+            echo "Public API: $(grep -c . build/ci/SfereAnalytics.api) lines in the dump."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: api-dump
+          path: build/ci/SfereAnalytics.api
+          retention-days: 14
+
+  contract:
+    name: API contract
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The rules below compare the pull request against its base.
+          fetch-depth: 0
+
+      # Client-facing material never names the ingestion vendor (company rule).
+      # Checked on every tracked file, code included: the SDK says "ingestion endpoint".
+      - name: No vendor names
+        run: |
+          # Spelled in pieces so this workflow does not match its own check.
+          PATTERN='jit''su|air''byte|click''house'
+          if git grep -n -i -E "$PATTERN" -- .; then
+            echo "::error::The ingestion vendor is named above. Say 'ingestion endpoint' (rule in CLAUDE.md)."
+            exit 1
+          fi
+          echo "No vendor names."
+
+      # The committed API dump is the one the code produces. Same idea as a
+      # generated API document: tools/api_dump.sh is its only writer, this the gate.
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: api-dump
+          path: ${{ runner.temp }}/api-dump
+      - name: The committed API dump matches the code
+        run: |
+          if diff -u api/SfereAnalytics.api "$RUNNER_TEMP/api-dump/SfereAnalytics.api" > "$RUNNER_TEMP/api.diff"; then
+            echo "api/SfereAnalytics.api matches the code."
+            exit 0
+          fi
+          {
+            echo "## The committed public API dump is stale"
+            echo
+            echo "\`api/SfereAnalytics.api\` does not match the code. Regenerate it on a Mac and commit the result:"
+            echo
+            echo '```console'
+            echo 'tools/api_dump.sh'
+            echo '```'
+            echo
+            echo "What the dump changes:"
+            echo
+            echo '```diff'
+            head -n 2000 "$RUNNER_TEMP/api.diff"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error file=api/SfereAnalytics.api::The public API dump is stale. Run: tools/api_dump.sh (the diff is in the job summary)."
+          exit 1
+
+      # Reviewers read the public API change in the pull request, the way an API
+      # changelog is read: the dump's diff against the base goes into the summary.
+      - name: Public API changes since the base
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if git diff --quiet "origin/${BASE_REF}...HEAD" -- api/; then
+            echo "The public API is unchanged."
+            exit 0
+          fi
+          {
+            echo "## Public API changes"
+            echo
+            echo '```diff'
+            git diff "origin/${BASE_REF}...HEAD" -- api/
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # A tag is a release: Swift Package Manager installs straight from it, so the SDK
+      # must not change under a version that is already tagged. SfereVersion.current
+      # (Sources/SfereAnalytics/Support.swift) moves first. The same change set needs a
+      # CHANGELOG entry, unless the pull request carries the `skip-changelog` label.
+      - name: A change to the SDK bumps an unreleased version and the CHANGELOG
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          VERSION="$(sed -n 's/^ *public static let current = "\(.*\)"$/\1/p' Sources/SfereAnalytics/Support.swift)"
+          case "$VERSION" in
+            [0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "::error file=Sources/SfereAnalytics/Support.swift::SfereVersion.current='$VERSION' is not X.Y.Z or X.Y.Z-pre.N."; exit 1 ;;
+          esac
+          echo "SfereVersion.current=$VERSION"
+          if git diff --quiet "origin/${BASE_REF}...HEAD" -- Sources Package.swift Package.resolved; then
+            echo "The SDK did not change; no version or CHANGELOG rule applies."
+            exit 0
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/v${VERSION}" > /dev/null; then
+            echo "::error file=Sources/SfereAnalytics/Support.swift::The SDK changed but SfereVersion.current=${VERSION} is already released (tag v${VERSION} exists). Bump it."
+            exit 1
+          fi
+          echo "v${VERSION} is not tagged yet: the version is open for changes."
+          case ",${LABELS}," in
+            *,skip-changelog,*) echo "skip-changelog label: CHANGELOG entry not required."; exit 0 ;;
+          esac
+          if git diff --quiet "origin/${BASE_REF}...HEAD" -- CHANGELOG.md; then
+            echo "::error file=CHANGELOG.md::The SDK changed but CHANGELOG.md did not. Add the entry under '## [Unreleased]' (or label the pull request skip-changelog)."
+            exit 1
+          fi
+          echo "CHANGELOG.md moved with the SDK."
+
+  test:
+    name: Tests & coverage
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+      - name: XCTest suite with code coverage
+        run: |
+          mkdir -p build/ci
+          set -o pipefail
+          swift test --enable-code-coverage --force-resolved-versions 2>&1 | tee build/ci/swift-test.log
+      # llvm-cov exports the coverage as lcov; SonarQube reads its generic coverage
+      # format, so the same data is converted with paths relative to the repository.
+      - name: Coverage report
+        if: always()
+        run: |
+          BIN="$(swift build --show-bin-path)/SfereAnalyticsPackageTests.xctest/Contents/MacOS/SfereAnalyticsPackageTests"
+          PROFDATA="$(swift build --show-bin-path)/codecov/default.profdata"
+          [ -f "$PROFDATA" ] || { echo "No coverage data was produced."; exit 0; }
+          xcrun llvm-cov export -format=lcov "$BIN" -instr-profile "$PROFDATA" \
+            -ignore-filename-regex='(\.build|Tests)/' > build/ci/coverage.lcov
+          python3 - "$PWD" <<'PY'
+          import sys
+          from xml.sax.saxutils import quoteattr
+          root = sys.argv[1].rstrip("/") + "/"
+          files, current = {}, None
+          for line in open("build/ci/coverage.lcov"):
+              line = line.strip()
+              if line.startswith("SF:"):
+                  current = files.setdefault(line[3:].removeprefix(root), {})
+              elif line.startswith("DA:") and current is not None:
+                  number, hits = line[3:].split(",")[:2]
+                  current[int(number)] = current.get(int(number), 0) + int(hits)
+          with open("build/ci/sonar-coverage.xml", "w") as out:
+              out.write('<coverage version="1">\n')
+              for path, lines in sorted(files.items()):
+                  out.write(f"  <file path={quoteattr(path)}>\n")
+                  for number, hits in sorted(lines.items()):
+                      out.write(f'    <lineToCover lineNumber="{number}" covered="{str(hits > 0).lower()}"/>\n')
+                  out.write("  </file>\n")
+              out.write("</coverage>\n")
+          PY
+      - name: Test and coverage summary
+        if: always()
+        run: |
+          {
+            RESULT="$(grep -E '^[[:space:]]*Executed [0-9]+ tests?' build/ci/swift-test.log 2>/dev/null | tail -n 1 | sed 's/^[[:space:]]*//')"
+            echo "### Tests: ${RESULT:-no XCTest summary found}"
+            echo
+            if [ -f build/ci/coverage.lcov ]; then
+              awk -F: '
+                /^LF:/ { found += $2 } /^LH:/ { hit += $2 }
+                END { if (found) printf "| metric | %% | covered |\n|---|---|---|\n| line | %.1f%% | %d/%d |\n", 100 * hit / found, hit, found }
+              ' build/ci/coverage.lcov
+            else
+              echo "No coverage report was produced."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: test-results
+          path: build/ci/
+          retention-days: 14
+
+  # SonarQube Cloud: static analysis plus the coverage from `test`. Swift needs no
+  # build for the analysis, so it runs on Linux; the keys and paths are in
+  # sonar-project.properties. The scan needs SONAR_TOKEN (repository secret). Without
+  # it (Dependabot runs, forks) the job passes with a note, so the required
+  # "SonarQube" check stays green. With it, a failed quality gate fails the job
+  # (sonar.qualitygate.wait).
+  sonar:
+    name: SonarQube
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.SONAR_TOKEN != ''
+        with:
+          fetch-depth: 0 # blame data for new-code detection
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: env.SONAR_TOKEN != ''
+        with:
+          name: test-results
+          path: build/ci/
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: env.SONAR_TOKEN != ''
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: SonarQube analysis
+        if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
+        env:
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+      - name: Sonar skipped
+        if: env.SONAR_TOKEN == ''
+        run: echo "SONAR_TOKEN is not set; SonarQube Cloud analysis was skipped." >> "$GITHUB_STEP_SUMMARY"

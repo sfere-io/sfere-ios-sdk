@@ -1,5 +1,6 @@
 import Foundation
 import Segment
+
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -17,7 +18,8 @@ public final class Sfere {
 
     /// The instance created by `setup(_:)`. Before setup it is an inactive instance that ignores calls.
     public static var shared: Sfere {
-        sharedLock.lock(); defer { sharedLock.unlock() }
+        sharedLock.lock()
+        defer { sharedLock.unlock() }
         return sharedInstance ?? inactive
     }
 
@@ -25,7 +27,8 @@ public final class Sfere {
     /// A second call is ignored and returns the existing instance.
     @discardableResult
     public static func setup(_ configuration: SfereConfiguration) -> Sfere {
-        sharedLock.lock(); defer { sharedLock.unlock() }
+        sharedLock.lock()
+        defer { sharedLock.unlock() }
         if let existing = sharedInstance {
             existing.logger.error("setup(_:) was called more than once; the first configuration stays in use.")
             return existing
@@ -95,7 +98,8 @@ public final class Sfere {
 
         let settingsData = SfereSettings.data(writeKey: writeKey, apiHost: host.apiHost)
         let uploader = configuration.uploader ?? URLSessionUploader()
-        let lifecycle: TrackedLifecycleEvent = configuration.trackLifecycleEvents
+        let lifecycle: TrackedLifecycleEvent =
+            configuration.trackLifecycleEvents
             ? [.applicationInstalled, .applicationUpdated, .applicationOpened, .applicationBackgrounded]
             : .none
 
@@ -106,10 +110,12 @@ public final class Sfere {
             .defaultSettings(SfereSettings.settings(writeKey: writeKey, apiHost: host.apiHost))
             .flushAt(max(1, configuration.flushAt))
             .flushInterval(max(1, configuration.flushInterval))
-            .httpConfig(HttpConfig(
-                rateLimitConfig: RateLimitConfig(enabled: true),
-                backoffConfig: BackoffConfig(enabled: true)
-            ))
+            .httpConfig(
+                HttpConfig(
+                    rateLimitConfig: RateLimitConfig(enabled: true),
+                    backoffConfig: BackoffConfig(enabled: true)
+                )
+            )
             .httpSession(SfereHTTPSession(settingsData: settingsData, uploader: uploader))
             .requestFactory { SfereRequests.shape($0, writeKey: writeKey, host: host) }
             .storageMode(configuration.storageMode)
@@ -159,7 +165,9 @@ public final class Sfere {
                 metadataPlugins.append(plugin)
             }
         }
-        metadataPlugins.forEach { destination.remove(plugin: $0) }
+        for plugin in metadataPlugins {
+            destination.remove(plugin: plugin)
+        }
         destination.add(plugin: SfereSanitizerPlugin())
     }
 
