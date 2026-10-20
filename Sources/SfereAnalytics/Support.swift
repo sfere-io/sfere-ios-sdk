@@ -4,7 +4,7 @@ import Segment
 /// Version and naming stamped on every event as `context.library` (WIRE-CONTRACT §4).
 public enum SfereVersion {
     /// This SDK's version. Kept in step with the release tag.
-    public static let current = "0.1.0-beta.1"
+    public static let current = "0.1.0-beta.2"
     static let libraryName = "@fanfinity/sfere-ios"
     static var baseLibrary: String { "analytics-swift@\(Analytics.version())" }
 }

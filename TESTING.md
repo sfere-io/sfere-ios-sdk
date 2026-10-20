@@ -4,7 +4,7 @@ For developers and testers. To add the SDK to an app, see [`README.md`](README.m
 
 ## Status (2026-10-20)
 
-Ready for internal testing. Version `0.1.0-beta.1`, not tagged yet: an admin creates the tag after the CI/CD pull request merges ([`docs/ci-cd.md`](docs/ci-cd.md)).
+Ready for internal testing. Version `0.1.0-beta.2`, the first published beta ([`docs/ci-cd.md`](docs/ci-cd.md)).
 
 | Area | State |
 |---|---|

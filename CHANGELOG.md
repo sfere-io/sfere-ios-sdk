@@ -7,6 +7,15 @@ the tagged version as the GitHub release notes, so write entries for app develop
 
 ## [Unreleased]
 
+## [0.1.0-beta.2] - 2026-10-20
+
+The first published beta: same SDK as 0.1.0-beta.1, whose tag exists but whose release
+run stopped before the GitHub release (a bug in the release workflow, not in the SDK).
+
+### Fixed
+
+- The release workflow builds the throwaway app package it uses to check the tag.
+
 ## [0.1.0-beta.1] - 2026-10-20
 
 ### Added
