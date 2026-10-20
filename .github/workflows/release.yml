@@ -92,6 +92,9 @@ jobs:
           let package = Package(
               name: "Consumer",
               platforms: [.iOS(.v15)],
+              // Xcode makes a scheme per product, not per target: without this there is
+              // no "Consumer" scheme to build.
+              products: [.library(name: "Consumer", targets: ["Consumer"])],
               dependencies: [
                   .package(url: "https://github.com/${GITHUB_REPOSITORY}.git", exact: "${VERSION}"),
               ],
