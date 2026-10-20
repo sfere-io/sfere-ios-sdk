@@ -19,7 +19,7 @@ The Sfere iOS SDK. It collects first-party fan events in iOS apps and sends them
 | `.githooks/pre-commit` | swift-format on the staged Swift, `tools/api_dump.sh` when SDK sources are staged, vendor-name check. Installed with `git config core.hooksPath .githooks`. |
 | `api/SfereAnalytics.api` | The public API dump (iOS), from the compiler's symbol graph. `tools/api_dump.sh` is its only writer (`--check` compares); CI's API contract job is the gate. |
 | `.swift-format`, `.swiftlint.yml` | Formatting (4 spaces, 140 columns) and lint rules; zero findings allowed, no baseline. Thresholds follow the Android SDK's detekt config. |
-| `sonar-project.properties` | SonarQube Cloud project `sfere-io_sfere-ios-sdk`, organization `sfere-io`; CI runs it only when `SONAR_TOKEN` exists. |
+| `sonar-project.properties` | SonarQube Cloud project `sfere-io_sfere-ios-sdk`, organization `sfere-io`; CI runs it only when `SONAR_TOKEN` exists (set 2026-10-20). |
 | `Package.swift` | Package manifest. It must stay at the repo root, because SPM only installs packages whose manifest is at the root. Uses the default `Sources/` and `Tests/` paths. |
 | `Sources/SfereAnalytics/` | The SDK. `Sfere.swift` (public API), `SfereTransport.swift` (inline settings, local settings answer, Basic auth), `Plugins/SferePlugins.swift` (rename, enrichment, sanitizer), `DeepLinkParser.swift`, `SfereState.swift`, `PrivacyInfo.xcprivacy` |
 | `Tests/SfereAnalyticsTests/` | XCTest. `WireTests.swift` runs the real base library and checks the captured HTTP bodies |
@@ -102,4 +102,4 @@ These files are shared and must stay byte-identical in both repos: `fixtures/dee
 - **Spike B (Q1, open):** send real events to staging `/v1/batch/b` with a browser key, and check gzip support. This needs a staging host and key.
 - **`debug` option:** the README and `SfereConfiguration` say debug mode prints every payload, but the SDK prints none. Decide whether to add payload logging (on both platforms) or fix the docs.
 - **Simulator context:** `context.network` is all false and `device.model` is `arm64` on the simulator; check both on a real device before deciding anything from them.
-- **Next round:** advertising IDs, the first beta tag (`v0.1.0-beta.1`, an admin creates it on `main`), the SonarQube Cloud project and its `SONAR_TOKEN`, a macOS job for the simulator flows, a parity job that checks out `sfere-android-sdk`.
+- **Next round:** advertising IDs, the first beta tag (`v0.1.0-beta.1`, an admin creates it on `main`), a macOS job for the simulator flows, a parity job that checks out `sfere-android-sdk`.

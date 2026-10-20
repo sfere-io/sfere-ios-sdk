@@ -166,7 +166,7 @@ can differ in rare cases. When it does, CI's output wins.
 
 | Name | Where | Used by |
 |---|---|---|
-| `SONAR_TOKEN` | repository secret (not set yet) | the `SonarQube` job. SonarQube Cloud project `sfere-io_sfere-ios-sdk` in organization `sfere-io` |
+| `SONAR_TOKEN` | repository secret (set 2026-10-20) | the `SonarQube` job. SonarQube Cloud project `sfere-io_sfere-ios-sdk` in organization `sfere-io`: https://sonarcloud.io/project/overview?id=sfere-io_sfere-ios-sdk |
 | `GITHUB_TOKEN` | automatic | resolving the tag in the release job, the GitHub release |
 
 No deploy keys, no personal tokens, no cloud credentials: the SDK ships as git tags.
