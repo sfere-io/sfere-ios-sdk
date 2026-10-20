@@ -21,6 +21,7 @@
 /fixtures/                      @mabumusa1 @KaramYaaqba
 /tools/api_dump.py              @mabumusa1 @KaramYaaqba
 /tools/api_dump.sh              @mabumusa1 @KaramYaaqba
+/tools/xcodebuild_strict.sh     @mabumusa1 @KaramYaaqba
 /.swift-format                  @mabumusa1 @KaramYaaqba
 /.swiftlint.yml                 @mabumusa1 @KaramYaaqba
 /sonar-project.properties       @mabumusa1 @KaramYaaqba

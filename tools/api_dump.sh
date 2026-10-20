@@ -8,7 +8,8 @@
 #
 # Compiles SfereAnalytics for the iOS Simulator (the dump is the iOS API: some methods exist
 # only where UIKit does), with the compiler's symbol graph turned on, then turns the graph
-# into sorted text with tools/api_dump.py. Warnings are errors here, as in CI.
+# into sorted text with tools/api_dump.py. Warnings in the SDK are errors here, as in CI
+# (tools/xcodebuild_strict.sh).
 #
 # This script is the only writer of api/SfereAnalytics.api. CI's "Build" job runs it and
 # the "API contract" job compares its output with the committed file.
@@ -30,12 +31,11 @@ work=".build/api-dump"
 rm -rf "$work/symbol-graphs"
 mkdir -p "$work/symbol-graphs"
 
-xcodebuild build -quiet \
+tools/xcodebuild_strict.sh build -quiet \
     -scheme SfereAnalytics \
     -destination 'generic/platform=iOS Simulator' \
     -derivedDataPath "$work/derived-data" \
     -onlyUsePackageVersionsFromResolvedFile \
-    SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
     OTHER_SWIFT_FLAGS="\$(inherited) -emit-symbol-graph -emit-symbol-graph-dir $PWD/$work/symbol-graphs -symbol-graph-minimum-access-level public"
 
 if [ "$check" = 1 ]; then

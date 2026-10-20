@@ -8,7 +8,7 @@ name: ci
 # Jobs, and the gate each one is (docs/ci-cd.md has the long version):
 #   Swift style       swift-format lint, the formatting the pre-commit hook applies
 #   Static analysis   SwiftLint (every warning is an error)
-#   Build             the SDK for the iOS Simulator and for devices, warnings as errors;
+#   Build             the SDK for the iOS Simulator and for devices, warnings in our code as errors;
 #                     the sample app and its UI tests; the public API dump
 #   API contract      the public API dump, the version/CHANGELOG rules, no vendor names
 #   Tests & coverage  the XCTest suite with code coverage
@@ -86,13 +86,13 @@ jobs:
           tools/api_dump.sh --output build/ci/SfereAnalytics.api
       - name: SDK for iOS devices (Release)
         run: |
-          xcodebuild build -quiet \
+          tools/xcodebuild_strict.sh build -quiet \
             -scheme SfereAnalytics \
             -destination 'generic/platform=iOS' \
             -configuration Release \
             -derivedDataPath .build/ci-device \
             -onlyUsePackageVersionsFromResolvedFile \
-            SWIFT_TREAT_WARNINGS_AS_ERRORS=YES CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO
       - name: Install XcodeGen
         run: |
           curl -fsSL --proto '=https' -o "$RUNNER_TEMP/xcodegen.zip" \
@@ -105,7 +105,7 @@ jobs:
       - name: Sample app and its UI tests
         run: |
           xcodegen generate --spec Example/project.yml --quiet
-          xcodebuild build-for-testing -quiet \
+          tools/xcodebuild_strict.sh build-for-testing -quiet \
             -project Example/SfereExample.xcodeproj \
             -scheme SfereExample \
             -destination 'generic/platform=iOS Simulator' \

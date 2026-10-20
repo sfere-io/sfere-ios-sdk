@@ -28,6 +28,7 @@ The Sfere iOS SDK. It collects first-party fan events in iOS apps and sends them
 | `tools/mock_ingest.mjs` | Mock ingestion endpoint for the sample app (Node, no dependencies): `/v1/batch/b`, `GET /__events`, `POST /__reset`, `POST /__fail {status, count, retryAfter}`, gzip bodies. Port 4320 or `SFERE_MOCK_PORT`. Start and stop it with `tools/mock_ingest_ctl.sh start|stop|status`. |
 | `tools/ios_flows.py` | Phase D2 driver: a dedicated simulator `Sfere Flows iPhone 16` (iOS 18.5), fresh install and upgrade through `simctl`, then the XCUITest flows. Work files go to `$TMPDIR/sfere-ios-flows`. |
 | `tools/api_dump.sh`, `tools/api_dump.py` | Build for the iOS Simulator with the symbol graph on, then write `api/SfereAnalytics.api`. |
+| `tools/xcodebuild_strict.sh` | `xcodebuild` that fails on warnings in this repository's code. CI's builds use it. |
 | `tools/parity.sh`, `tools/parity_diff.py` | Cross-repo parity check: verifies the shared files are identical in both repos, runs both parity tests, and compares the upload bodies key by key. Exits non-zero on any difference. |
 | `fixtures/` | `deeplinks.json` (URL → `clientIds` / `campaign`) and `event-names.json` (base names → Sfere names). The Android repo has an identical copy. |
 
@@ -44,7 +45,7 @@ The Sfere iOS SDK. It collects first-party fan events in iOS apps and sends them
 
 - `Package.resolved` is committed and pins every dependency to a revision; CI builds with `--force-resolved-versions`.
 - **Version:** `SfereVersion.current` in `Sources/SfereAnalytics/Support.swift` is the only place the SDK version lives (`0.1.0-beta.1`). It becomes `context.library.version` and the tag `vVERSION`; SwiftPM installs from that tag. A tagged version is immutable: bump it before changing the SDK again (CI's "API contract" job fails otherwise), and add the `CHANGELOG.md` entry under `## [Unreleased]`.
-- **Warnings are errors:** CI builds with `SWIFT_TREAT_WARNINGS_AS_ERRORS=YES`, swift-format and SwiftLint run `--strict`. Fix the cause; disable a rule inline only with a reason in the comment.
+- **Warnings are errors:** CI's Xcode builds go through `tools/xcodebuild_strict.sh`, which fails on any warning in `Sources/`, `Tests/` or `Example/` (not `SWIFT_TREAT_WARNINGS_AS_ERRORS`, which clashes with the dependencies' suppressed warnings); swift-format and SwiftLint run `--strict`. Fix the cause; disable a rule inline only with a reason in the comment.
 - **Public API is a contract:** any change to what `import SfereAnalytics` exposes shows up as a diff of `api/SfereAnalytics.api` (run `tools/api_dump.sh` on a Mac, commit the dump, review the diff). Keep the Android SDK's API in step.
 - The tests use write keys starting with `sferetest`. The base library makes a UserDefaults suite per key, and the tests delete those suites in `removeTestPreferenceSuites()`. cfprefsd sometimes writes a few empty 42-byte suite files back after the test ends; the next run's class `setUp` deletes them. Never widen the sweep beyond the `sferetest` prefix.
 
