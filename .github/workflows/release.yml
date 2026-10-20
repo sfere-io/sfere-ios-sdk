@@ -1,0 +1,157 @@
+name: release
+
+# Verifies a tagged version the way an app will install it, then cuts the GitHub release.
+#
+# Trigger: a `vX.Y.Z` (or `vX.Y.Z-beta.N`) tag on a commit that is on main. Swift
+# Package Manager installs straight from git tags, so pushing the tag *is* publishing:
+# creating it is the privileged act. The "release-tags" ruleset lets only repository
+# admins create `v*` tags, "protect-tags" stops anyone moving or deleting one, and the
+# `release` environment accepts only `v*` refs. Required-reviewer gates are not
+# available on this plan, so the tag ruleset is the gate.
+#
+# Flow: the same CI gate every pull request passes (ci.yml, via workflow_call) ->
+# the tag must equal SfereVersion.current and have a CHANGELOG section -> a fresh app
+# package resolves the SDK from GitHub at that version, as an app would, and the
+# resolved revision must be the tagged commit -> it builds for the iOS Simulator ->
+# GitHub release with the CHANGELOG section as notes and the public API dump attached.
+#
+# A tag never moves. To ship a fix, bump SfereVersion.current and tag again.
+# Developer-facing instructions: docs/ci-cd.md.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  release:
+    name: Verify and release
+    needs: ci
+    runs-on: macos-26
+    timeout-minutes: 30
+    environment: release
+    permissions:
+      contents: write # the GitHub release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # "the tag is on main" is checked below
+
+      - name: Resolve and check the version
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          case "$TAG" in
+            v[0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "::error::Tag '$TAG' is not vX.Y.Z or vX.Y.Z-pre.N."; exit 1 ;;
+          esac
+          VERSION="${TAG#v}"
+          CODE="$(sed -n 's/^ *public static let current = "\(.*\)"$/\1/p' Sources/SfereAnalytics/Support.swift)"
+          if [ "$CODE" != "$VERSION" ]; then
+            echo "::error file=Sources/SfereAnalytics/Support.swift::Tag ${TAG} does not match SfereVersion.current=${CODE}. Set it to ${VERSION} on main first, then tag that commit."
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Tag ${TAG} points at ${GITHUB_SHA::7}, which is not on main. Release only what went through a pull request."
+            exit 1
+          fi
+          if ! grep -q "^## \[${VERSION}\]" CHANGELOG.md; then
+            echo "::error file=CHANGELOG.md::CHANGELOG.md has no '## [${VERSION}]' section. Rename '## [Unreleased]' to it (with the date) before tagging."
+            exit 1
+          fi
+          case "$VERSION" in
+            *-*) PRERELEASE=true ;;
+            *) PRERELEASE=false ;;
+          esac
+          echo "VERSION=$VERSION"       >> "$GITHUB_ENV"
+          echo "TAG=$TAG"               >> "$GITHUB_ENV"
+          echo "PRERELEASE=$PRERELEASE" >> "$GITHUB_ENV"
+          echo "::notice::Releasing SfereAnalytics ${VERSION} (prerelease=${PRERELEASE})."
+
+      # What an app does: a package that depends on this repository at exactly this
+      # version, resolved from GitHub (the token reads the private repository, as an
+      # app developer's GitHub account does during the beta), then built for iOS.
+      - name: Verify the tag as an app resolves it
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          APP="$RUNNER_TEMP/consumer"
+          mkdir -p "$APP/Sources/Consumer"
+          cat > "$APP/Package.swift" <<SWIFT
+          // swift-tools-version:5.9
+          import PackageDescription
+          let package = Package(
+              name: "Consumer",
+              platforms: [.iOS(.v15)],
+              dependencies: [
+                  .package(url: "https://github.com/${GITHUB_REPOSITORY}.git", exact: "${VERSION}"),
+              ],
+              targets: [
+                  .target(name: "Consumer", dependencies: [.product(name: "SfereAnalytics", package: "${GITHUB_REPOSITORY#*/}")]),
+              ]
+          )
+          SWIFT
+          cat > "$APP/Sources/Consumer/Consumer.swift" <<'SWIFT'
+          import SfereAnalytics
+          public let sdkVersion = SfereVersion.current
+          SWIFT
+          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+          cd "$APP"
+          swift package resolve
+          RESOLVED="$(python3 -c 'import json; pins = json.load(open("Package.resolved"))["pins"]; print(next(p["state"]["revision"] for p in pins if p["identity"] == "sfere-ios-sdk"))')"
+          if [ "$RESOLVED" != "$GITHUB_SHA" ]; then
+            echo "::error::${VERSION} resolves to ${RESOLVED}, not the tagged commit ${GITHUB_SHA}."
+            exit 1
+          fi
+          xcodebuild build -quiet -scheme Consumer -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO
+          git config --global --unset-all url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf
+          echo "::notice::SfereAnalytics ${VERSION} resolves to ${GITHUB_SHA::7} and builds for iOS."
+
+      - name: Release notes from the CHANGELOG
+        run: |
+          # The section for this version: from its heading to the next "## [" heading.
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" { on = 1; next }
+            on && /^## \[/ { exit }
+            on { print }
+          ' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          {
+            echo
+            echo "## Install"
+            echo
+            echo '```swift'
+            echo ".package(url: \"https://github.com/${GITHUB_REPOSITORY}.git\", exact: \"${VERSION}\"),"
+            echo '```'
+            echo
+            echo "During the beta the repository is private: Xcode needs a GitHub account with read access (see the README)."
+            echo
+            echo "Commit: \`${GITHUB_SHA}\`"
+          } >> "$RUNNER_TEMP/notes.md"
+          cat "$RUNNER_TEMP/notes.md"
+
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ARGS=(--title "$TAG" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag)
+          if [ "$PRERELEASE" = "true" ]; then ARGS+=(--prerelease); fi
+          cp api/SfereAnalytics.api "$RUNNER_TEMP/SfereAnalytics-${VERSION}.api"
+          gh release create "$TAG" "${ARGS[@]}" "$RUNNER_TEMP/SfereAnalytics-${VERSION}.api"
+          {
+            echo "### Released SfereAnalytics ${VERSION}"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Tag | \`${TAG}\` |"
+            echo "| Commit | \`${GITHUB_SHA}\` |"
+            echo "| Release | https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG} |"
+          } >> "$GITHUB_STEP_SUMMARY"

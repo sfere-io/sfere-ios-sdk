@@ -78,8 +78,11 @@ final class SampleAppFlowTests: XCTestCase {
         MockIngest.failNext(status: 503)
         tapButton("view_item")
         let retried = waitForEvent("view_item", timeout: 90, pressFlush: true)
-        XCTAssertTrue(failedAttempts(status: 503).contains { $0.eventName == "view_item" && $0["messageId"] as? String == retried["messageId"] as? String },
-                      "the delivered view_item must be the same event that got the 503")
+        XCTAssertTrue(
+            failedAttempts(status: 503).contains {
+                $0.eventName == "view_item" && $0["messageId"] as? String == retried["messageId"] as? String
+            },
+            "the delivered view_item must be the same event that got the 503")
 
         // 429 with Retry-After: kept and sent again after the wait.
         MockIngest.failNext(status: 429, retryAfter: 2)
@@ -93,7 +96,10 @@ final class SampleAppFlowTests: XCTestCase {
         let deadline = Date().addingTimeInterval(20)
         while failedAttempts(status: 400).isEmpty && Date() < deadline { Thread.sleep(forTimeInterval: 1) }
         XCTAssertTrue(failedAttempts(status: 400).contains { $0.eventName == "remove_from_cart" })
-        for _ in 0..<3 { tapButton("flush now"); Thread.sleep(forTimeInterval: 2) }
+        for _ in 0..<3 {
+            tapButton("flush now")
+            Thread.sleep(forTimeInterval: 2)
+        }
         tapButton("search")
         let events = MockIngest.waitForDelivered { $0.contains { $0.eventName == "search" } }
         XCTAssertFalse(events.contains { $0.eventName == "remove_from_cart" }, "a batch answered with 400 must be dropped")
@@ -109,9 +115,11 @@ final class SampleAppFlowTests: XCTestCase {
         app.terminate()
         MockIngest.setOffline(false)
         launch()
-        let events = MockIngest.waitForDelivered(timeout: 120, whileWaiting: { self.tapButton("flush now") }) {
-            Self.queueIndexes(in: $0).count >= 200
-        }
+        let events = MockIngest.waitForDelivered(
+            timeout: 120,
+            whileWaiting: { self.tapButton("flush now") },
+            until: { Self.queueIndexes(in: $0).count >= 200 }
+        )
         XCTAssertEqual(Self.queueIndexes(in: events), Set(1...200), "all 200 queued events must arrive after the relaunch")
         let duplicates = events.filter { $0.eventName == "queue_test_event" }.count - Self.queueIndexes(in: events).count
         XCTAssertEqual(duplicates, 0, "no queued event may be sent twice")
@@ -169,8 +177,10 @@ final class SampleAppFlowTests: XCTestCase {
     }
 
     @discardableResult
-    private func waitForEvent(_ name: String, timeout: TimeInterval = 20, pressFlush: Bool = false,
-                              file: StaticString = #filePath, line: UInt = #line) -> [String: Any] {
+    private func waitForEvent(
+        _ name: String, timeout: TimeInterval = 20, pressFlush: Bool = false,
+        file: StaticString = #filePath, line: UInt = #line
+    ) -> [String: Any] {
         let events = MockIngest.waitForDelivered(timeout: timeout, whileWaiting: pressFlush ? { self.tapButton("flush now") } : nil) {
             $0.contains { $0.eventName == name }
         }
@@ -211,8 +221,9 @@ final class SampleAppFlowTests: XCTestCase {
         // Tap the switch itself (right edge); tapping the label does not toggle a SwiftUI Toggle.
         app.switches[label].firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
         let predicate = NSPredicate(format: "value == %@", on ? "1" : "0")
-        XCTAssertEqual(XCTWaiter.wait(for: [expectation(for: predicate, evaluatedWith: app.switches[label].firstMatch)], timeout: 5), .completed,
-                       "\(label) did not switch \(on ? "on" : "off")")
+        XCTAssertEqual(
+            XCTWaiter.wait(for: [expectation(for: predicate, evaluatedWith: app.switches[label].firstMatch)], timeout: 5), .completed,
+            "\(label) did not switch \(on ? "on" : "off")")
     }
 
     private func reveal(_ element: XCUIElement, label: String) {

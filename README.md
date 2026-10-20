@@ -1,5 +1,19 @@
 # Sfere iOS SDK
 
+[![CI](https://github.com/sfere-io/sfere-ios-sdk/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sfere-io/sfere-ios-sdk/actions/workflows/ci.yml)
+[![Release](https://github.com/sfere-io/sfere-ios-sdk/actions/workflows/release.yml/badge.svg)](https://github.com/sfere-io/sfere-ios-sdk/actions/workflows/release.yml)
+[![Quality gate status](https://sonarcloud.io/api/project_badges/measure?project=sfere-io_sfere-ios-sdk&metric=alert_status&token=61bcf202de5b92db0d6657ca789c499dbc1e52f5)](https://sonarcloud.io/summary/new_code?id=sfere-io_sfere-ios-sdk)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=sfere-io_sfere-ios-sdk&metric=coverage&token=61bcf202de5b92db0d6657ca789c499dbc1e52f5)](https://sonarcloud.io/summary/new_code?id=sfere-io_sfere-ios-sdk)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=sfere-io_sfere-ios-sdk&metric=ncloc&token=61bcf202de5b92db0d6657ca789c499dbc1e52f5)](https://sonarcloud.io/summary/new_code?id=sfere-io_sfere-ios-sdk)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=sfere-io_sfere-ios-sdk&metric=duplicated_lines_density&token=61bcf202de5b92db0d6657ca789c499dbc1e52f5)](https://sonarcloud.io/summary/new_code?id=sfere-io_sfere-ios-sdk)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=sfere-io_sfere-ios-sdk&metric=reliability_rating&token=61bcf202de5b92db0d6657ca789c499dbc1e52f5)](https://sonarcloud.io/summary/new_code?id=sfere-io_sfere-ios-sdk)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=sfere-io_sfere-ios-sdk&metric=security_rating&token=61bcf202de5b92db0d6657ca789c499dbc1e52f5)](https://sonarcloud.io/summary/new_code?id=sfere-io_sfere-ios-sdk)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=sfere-io_sfere-ios-sdk&metric=sqale_rating&token=61bcf202de5b92db0d6657ca789c499dbc1e52f5)](https://sonarcloud.io/summary/new_code?id=sfere-io_sfere-ios-sdk)
+[![Reliability Issues](https://sonarcloud.io/api/project_badges/measure?project=sfere-io_sfere-ios-sdk&metric=software_quality_reliability_issues&token=61bcf202de5b92db0d6657ca789c499dbc1e52f5)](https://sonarcloud.io/summary/new_code?id=sfere-io_sfere-ios-sdk)
+[![Security Issues](https://sonarcloud.io/api/project_badges/measure?project=sfere-io_sfere-ios-sdk&metric=software_quality_security_issues&token=61bcf202de5b92db0d6657ca789c499dbc1e52f5)](https://sonarcloud.io/summary/new_code?id=sfere-io_sfere-ios-sdk)
+[![Maintainability Issues](https://sonarcloud.io/api/project_badges/measure?project=sfere-io_sfere-ios-sdk&metric=software_quality_maintainability_issues&token=61bcf202de5b92db0d6657ca789c499dbc1e52f5)](https://sonarcloud.io/summary/new_code?id=sfere-io_sfere-ios-sdk)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=sfere-io_sfere-ios-sdk&metric=sqale_index&token=61bcf202de5b92db0d6657ca789c499dbc1e52f5)](https://sonarcloud.io/summary/new_code?id=sfere-io_sfere-ios-sdk)
+
 Collect first-party fan events in your iOS app and send them to Sfere. It sends the same payload and event names as the Sfere browser and server SDKs, so the same reports and ad-platform destinations work for web and app.
 
 - Swift Package: `SfereAnalytics`
@@ -9,19 +23,19 @@ Collect first-party fan events in your iOS app and send them to Sfere. It sends 
 
 ## Install
 
-> **Not yet published.** No release exists yet: the repository is private and has no release tag yet, so the steps below describe the planned install path for the beta.
+> **Beta.** The repository is private and the first tag is `v0.1.0-beta.1`. Releases and their notes: [Releases](https://github.com/sfere-io/sfere-ios-sdk/releases); how a version is cut: [`docs/ci-cd.md`](docs/ci-cd.md).
 
 In Xcode, choose **File → Add Package Dependencies…**, enter this repository's URL and add the `SfereAnalytics` product to your app target.
 
 Or add it in `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/fanfinity/sfere-ios-sdk.git", from: "0.1.0"),
+.package(url: "https://github.com/sfere-io/sfere-ios-sdk.git", exact: "0.1.0-beta.1"),
 // target dependency:
 .product(name: "SfereAnalytics", package: "sfere-ios-sdk"),
 ```
 
-During the beta the repository is private, so Xcode needs a GitHub account with access to it.
+During the beta the repository is private, so Xcode needs a GitHub account with access to it, and a beta is pinned with `exact:` (a `from:` range skips pre-releases). From 1.0.0, use `from: "1.0.0"`.
 
 ## Set up
 

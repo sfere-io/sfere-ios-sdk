@@ -29,14 +29,14 @@ final class LifecycleRenamePlugin: Plugin {
 
     /// Property renames per (already renamed) event.
     static let propertyRenames: [String: [String: String]] = [
-        "deep_link_opened": ["referrer": "referring_application", "sourceApplication": "referring_application"],
+        "deep_link_opened": ["referrer": "referring_application", "sourceApplication": "referring_application"]
     ]
 
     /// Properties kept per (already renamed) event; any other key is dropped. The base library
     /// copies every open-URL option into `deep_link_opened`, and each would become a warehouse
     /// column. Click IDs and UTMs already travel in `context.clientIds` / `context.campaign`.
     static let keptProperties: [String: Set<String>] = [
-        "deep_link_opened": ["url", "referring_application"],
+        "deep_link_opened": ["url", "referring_application"]
     ]
 
     func execute<T: RawEvent>(event: T?) -> T? {

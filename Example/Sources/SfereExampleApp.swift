@@ -1,6 +1,6 @@
+import SfereAnalytics
 import SwiftUI
 import UIKit
-import SfereAnalytics
 
 @main
 struct SfereExampleApp: App {

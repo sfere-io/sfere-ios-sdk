@@ -1,5 +1,6 @@
 import Foundation
 import XCTest
+
 @testable import SfereAnalytics
 
 /// The tables every Sfere SDK must agree on (`fixtures/`).

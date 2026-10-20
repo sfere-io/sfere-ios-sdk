@@ -17,6 +17,17 @@
       ]
     },
     {
+      "label": "iOS: quality checks",
+      "detail": "What CI checks: swift-format, SwiftLint, and the public API dump against the committed api/SfereAnalytics.api",
+      "type": "shell",
+      "command": "swift format lint --strict --recursive --parallel Package.swift Sources Tests Example && swiftlint lint --strict --quiet && tools/api_dump.sh --check",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
       "label": "iOS: build for Simulator",
       "detail": "Compiles the package for iOS without booting a simulator",
       "type": "shell",

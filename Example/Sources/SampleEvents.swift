@@ -4,8 +4,10 @@ import SfereAnalytics
 /// The events the sample app's buttons send, with GA4 properties as in EVENTS.md.
 /// The Android sample app (sfere-android-sdk, sample/) sends the same list.
 enum SampleEvents {
-    private static let jersey = SfereItem(itemId: "SKU-JERSEY-HOME", itemName: "Home jersey", price: 299, quantity: 1, itemCategories: ["apparel"])
-    private static let scarf = SfereItem(itemId: "SKU-SCARF", itemName: "Club scarf", price: 79, quantity: 2, itemCategories: ["accessories"])
+    private static let jersey = SfereItem(
+        itemId: "SKU-JERSEY-HOME", itemName: "Home jersey", price: 299, quantity: 1, itemCategories: ["apparel"])
+    private static let scarf = SfereItem(
+        itemId: "SKU-SCARF", itemName: "Club scarf", price: 79, quantity: 2, itemCategories: ["accessories"])
 
     private static func itemsPayload(_ items: SfereItem...) -> [String: Any] {
         let value = items.reduce(0.0) { $0 + ($1.price ?? 0) * Double($1.quantity ?? 1) }
@@ -18,7 +20,10 @@ enum SampleEvents {
 
     /// Name and properties for every `track` button, in screen order.
     static let trackEvents: [(name: String, properties: [String: Any])] = [
-        ("view_item_list", ["item_list_id": "new_season", "item_list_name": "New season", "items": [jersey.properties, scarf.properties]]),
+        (
+            "view_item_list",
+            ["item_list_id": "new_season", "item_list_name": "New season", "items": [jersey.properties, scarf.properties]]
+        ),
         ("select_item", ["item_list_id": "new_season", "items": [jersey.properties]]),
         ("view_item", itemsPayload(jersey)),
         ("add_to_wishlist", itemsPayload(scarf)),

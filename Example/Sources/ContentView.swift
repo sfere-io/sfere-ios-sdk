@@ -1,5 +1,5 @@
-import SwiftUI
 import SfereAnalytics
+import SwiftUI
 
 /// One screen: settings, consent and opt-out, a button per v1 event, and the requests the mock
 /// ingestion server received. Mirrors the Android sample app's MainActivity (sfere-android-sdk, sample/).
@@ -49,7 +49,9 @@ struct ContentView: View {
 
                 Section(header: Text("Identity and screens")) {
                     eventButton("identify sample_user_1") {
-                        Sfere.shared.identify(userId: "sample_user_1", traits: ["email": "fan@example.com", "phone": "+966500000000", "favorite_team": "home"])
+                        Sfere.shared.identify(
+                            userId: "sample_user_1",
+                            traits: ["email": "fan@example.com", "phone": "+966500000000", "favorite_team": "home"])
                     }
                     eventButton("screen: Match Center") { Sfere.shared.screen("Match Center", properties: ["match_id": "42"]) }
                     eventButton("Open test deep link") { Sfere.shared.openURL(SampleEvents.testDeepLink) }

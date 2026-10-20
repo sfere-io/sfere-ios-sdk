@@ -4,7 +4,7 @@ import Segment
 /// Version and naming stamped on every event as `context.library` (WIRE-CONTRACT §4).
 public enum SfereVersion {
     /// This SDK's version. Kept in step with the release tag.
-    public static let current = "0.1.0"
+    public static let current = "0.1.0-beta.1"
     static let libraryName = "@fanfinity/sfere-ios"
     static var baseLibrary: String { "analytics-swift@\(Analytics.version())" }
 }
@@ -72,12 +72,14 @@ final class InMemoryStore: SfereKeyValueStore {
     private let lock = NSLock()
 
     func data(forKey key: String) -> Data? {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return values[key]
     }
 
     func set(_ data: Data?, forKey key: String) {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         values[key] = data
     }
 }
@@ -114,7 +116,8 @@ struct SfereHost: Equatable {
         var description: String {
             switch self {
             case .notAnOrigin(let host):
-                return "\"host\" must be an http(s) origin without a path, query or fragment, e.g. \"https://ingest.example.com\". Got \"\(host)\"."
+                return
+                    "\"host\" must be an http(s) origin without a path, query or fragment, e.g. \"https://ingest.example.com\". Got \"\(host)\"."
             case .insecure(let host):
                 return "\"host\" must use https in release builds. Got \"\(host)\"."
             }
@@ -123,11 +126,11 @@ struct SfereHost: Equatable {
 
     static func validate(_ raw: String, allowInsecure: Bool = isDebugBuild) -> Result<SfereHost, ValidationError> {
         guard let components = URLComponents(string: raw.trimmingCharacters(in: .whitespaces)),
-              let scheme = components.scheme?.lowercased(), scheme == "https" || scheme == "http",
-              let host = components.host, !host.isEmpty,
-              components.path.isEmpty || components.path == "/",
-              components.query == nil, components.fragment == nil,
-              components.user == nil, components.password == nil
+            let scheme = components.scheme?.lowercased(), scheme == "https" || scheme == "http",
+            let host = components.host, !host.isEmpty,
+            components.path.isEmpty || components.path == "/",
+            components.query == nil, components.fragment == nil,
+            components.user == nil, components.password == nil
         else {
             return .failure(.notAnOrigin(raw))
         }

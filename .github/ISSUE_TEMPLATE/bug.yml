@@ -1,0 +1,41 @@
+name: Bug report
+description: The SDK sent the wrong thing, crashed, or did nothing
+labels: ["bug", "status:triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. The more precise the reproduction, the faster it gets fixed.
+        Never paste a real write key: replace it with `keyId:…`.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: The observed behaviour. Include the Xcode console output and, if you ran the mock, the relevant part of `curl -s http://127.0.0.1:4320/__events`.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: Steps, the calls made, the payload seen. A failing XCTest is even better.
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: "SDK version (the tag, e.g. `v0.1.0-beta.1`), iOS version, simulator or device, Xcode version, app deployment target."
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I checked the payload against `TESTING.md` section 6 before reporting
+        - label: This is not a secret or credential leak (those go to the maintainers privately, see SECURITY.md)

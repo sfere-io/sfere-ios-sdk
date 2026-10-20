@@ -85,7 +85,8 @@ final class SfereState {
 
     func mergeTraits(_ new: [String: Any]) {
         guard !new.isEmpty else { return }
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         var merged = store.decode(JSON.self, forKey: key(Keys.traits))?.dictionaryValue ?? [:]
         merged.merge(new) { _, newer in newer }
         store.encode(try? JSON(merged), forKey: key(Keys.traits))
@@ -101,7 +102,8 @@ final class SfereState {
     /// value replaces an older one; the same `fbclid` again keeps its original `fbc` timestamp.
     func recordLink(_ parsed: DeepLinkParser.Result) {
         guard !parsed.isEmpty else { return }
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         var clicks = store.decode(Clicks.self, forKey: key(Keys.clicks)) ?? Clicks()
         for (key, value) in parsed.clientIds where key != "fbc" {
             clicks.ids[key] = value
@@ -126,7 +128,8 @@ final class SfereState {
     /// Logout: forget traits, the session and its click IDs. Consent and opt-out are device
     /// choices, not user identity, so they stay.
     func reset() {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         store.set(nil, forKey: key(Keys.traits))
         store.set(nil, forKey: key(Keys.session))
         store.set(nil, forKey: key(Keys.clicks))

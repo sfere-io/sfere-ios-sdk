@@ -1,20 +1,22 @@
 # Testing the Sfere iOS SDK
 
-For developers and testers. To add the SDK to an app, see [`README.md`](README.md). The Android SDK lives in its own repository, [`fanfinity/sfere-android-sdk`](https://github.com/fanfinity/sfere-android-sdk), and sends the same payload.
+For developers and testers. To add the SDK to an app, see [`README.md`](README.md). The Android SDK lives in its own repository, [`sfere-io/sfere-android-sdk`](https://github.com/sfere-io/sfere-android-sdk), and sends the same payload.
 
-## Status (2026-10-18)
+## Status (2026-10-20)
 
-Ready for internal testing. Not published yet: there is no release tag, and the install steps in the README describe the planned beta path.
+Ready for internal testing. Version `0.1.0-beta.1`, not tagged yet: an admin creates the tag after the CI/CD pull request merges ([`docs/ci-cd.md`](docs/ci-cd.md)).
 
 | Area | State |
 |---|---|
-| iOS SDK | 40 unit tests pass. Runs in the sample app on the iOS Simulator, and every simulator flow passes (see [Simulator flows](#5-simulator-flows-automated)). |
+| iOS SDK | 45 unit tests pass. Runs in the sample app on the iOS Simulator, and every simulator flow passes (see [Simulator flows](#5-simulator-flows-automated)). |
 | Same payload as Android | The shared parity scenario matches field by field (`tools/parity.sh`). |
 | Staging | Not tested against the real ingestion endpoint yet. Everything so far runs against a local mock. |
+| CI | Every pull request runs Swift style, Static analysis, Build, API contract, Tests & coverage and SonarQube ([`docs/ci-cd.md`](docs/ci-cd.md)). The simulator flows and the parity check still run by hand. |
 
 ## What you need
 
 - macOS with Xcode 26 (Swift 5.9+).
+- SwiftLint for the lint check: `brew install swiftlint`.
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen) for the sample app: `brew install xcodegen`.
 - Node 18+ and Python 3 for the mock server and the scripts.
 
@@ -28,7 +30,7 @@ All commands below run from the repository root. In VS Code, the same commands a
 swift test
 ```
 
-Expected: `Executed 40 tests, with 0 failures`.
+Expected: `Executed 45 tests, with 0 failures`.
 
 ### 2. Same payload as Android
 
