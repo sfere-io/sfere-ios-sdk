@@ -23,14 +23,14 @@ Collect first-party fan events in your iOS app and send them to Sfere. It sends 
 
 ## Install
 
-> **Beta.** The repository is private and the first tag is `v0.1.0-beta.1`. Releases and their notes: [Releases](https://github.com/sfere-io/sfere-ios-sdk/releases); how a version is cut: [`docs/ci-cd.md`](docs/ci-cd.md).
+> **Beta.** The repository is private and the first release is `v0.1.0-beta.2`. Releases and their notes: [Releases](https://github.com/sfere-io/sfere-ios-sdk/releases); how a version is cut: [`docs/ci-cd.md`](docs/ci-cd.md).
 
 In Xcode, choose **File → Add Package Dependencies…**, enter this repository's URL and add the `SfereAnalytics` product to your app target.
 
 Or add it in `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/sfere-io/sfere-ios-sdk.git", exact: "0.1.0-beta.1"),
+.package(url: "https://github.com/sfere-io/sfere-ios-sdk.git", exact: "0.1.0-beta.2"),
 // target dependency:
 .product(name: "SfereAnalytics", package: "sfere-ios-sdk"),
 ```
