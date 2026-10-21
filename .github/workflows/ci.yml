@@ -15,7 +15,7 @@ name: ci
 #   SonarQube         SonarQube Cloud analysis of that coverage (skipped without SONAR_TOKEN)
 #
 # Runners: only Build and Tests & coverage need Xcode, so only they run on macOS
-# (macOS minutes cost ten times Linux minutes on a private repository). Style and
+# (macOS runners start more slowly than Linux ones). Style and
 # static analysis run in pinned Linux containers; the rest on ubuntu-latest.
 
 on:

@@ -78,11 +78,9 @@ jobs:
           echo "::notice::Releasing SfereAnalytics ${VERSION} (prerelease=${PRERELEASE})."
 
       # What an app does: a package that depends on this repository at exactly this
-      # version, resolved from GitHub (the token reads the private repository, as an
-      # app developer's GitHub account does during the beta), then built for iOS.
+      # version, resolved from GitHub with no credentials (the repository is public, so
+      # an app developer needs no GitHub account), then built for iOS.
       - name: Verify the tag as an app resolves it
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           APP="$RUNNER_TEMP/consumer"
           mkdir -p "$APP/Sources/Consumer"
@@ -107,7 +105,6 @@ jobs:
           import SfereAnalytics
           public let sdkVersion = SfereVersion.current
           SWIFT
-          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
           cd "$APP"
           swift package resolve
           RESOLVED="$(python3 -c 'import json; pins = json.load(open("Package.resolved"))["pins"]; print(next(p["state"]["revision"] for p in pins if p["identity"] == "sfere-ios-sdk"))')"
@@ -116,7 +113,6 @@ jobs:
             exit 1
           fi
           xcodebuild build -quiet -scheme Consumer -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO
-          git config --global --unset-all url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf
           echo "::notice::SfereAnalytics ${VERSION} resolves to ${GITHUB_SHA::7} and builds for iOS."
 
       - name: Release notes from the CHANGELOG
@@ -132,10 +128,16 @@ jobs:
             echo "## Install"
             echo
             echo '```swift'
-            echo ".package(url: \"https://github.com/${GITHUB_REPOSITORY}.git\", exact: \"${VERSION}\"),"
+            # A pre-release is pinned with exact: (a from: range skips pre-releases).
+            if [ "$PRERELEASE" = "true" ]; then
+              echo ".package(url: \"https://github.com/${GITHUB_REPOSITORY}.git\", exact: \"${VERSION}\"),"
+            else
+              echo ".package(url: \"https://github.com/${GITHUB_REPOSITORY}.git\", from: \"${VERSION}\"),"
+            fi
+            echo ".product(name: \"SfereAnalytics\", package: \"${GITHUB_REPOSITORY#*/}\"),"
             echo '```'
             echo
-            echo "During the beta the repository is private: Xcode needs a GitHub account with read access (see the README)."
+            echo "No GitHub account is needed: the repository is public. In Xcode, use File > Add Package Dependencies with https://github.com/${GITHUB_REPOSITORY}.git (see the README)."
             echo
             echo "Commit: \`${GITHUB_SHA}\`"
           } >> "$RUNNER_TEMP/notes.md"

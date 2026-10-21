@@ -23,19 +23,19 @@ Collect first-party fan events in your iOS app and send them to Sfere. It sends 
 
 ## Install
 
-> **Beta.** The repository is private and the first release is `v0.1.0-beta.2`. Releases and their notes: [Releases](https://github.com/sfere-io/sfere-ios-sdk/releases); how a version is cut: [`docs/ci-cd.md`](docs/ci-cd.md).
+The current version is `0.1.0`. Releases and their notes: [Releases](https://github.com/sfere-io/sfere-ios-sdk/releases); how a version is cut: [`docs/ci-cd.md`](docs/ci-cd.md).
 
-In Xcode, choose **File → Add Package Dependencies…**, enter this repository's URL and add the `SfereAnalytics` product to your app target.
+In Xcode, choose **File → Add Package Dependencies…**, enter `https://github.com/sfere-io/sfere-ios-sdk.git` and add the `SfereAnalytics` product to your app target. No GitHub account is needed.
 
 Or add it in `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/sfere-io/sfere-ios-sdk.git", exact: "0.1.0-beta.2"),
+.package(url: "https://github.com/sfere-io/sfere-ios-sdk.git", from: "0.1.0"),
 // target dependency:
 .product(name: "SfereAnalytics", package: "sfere-ios-sdk"),
 ```
 
-During the beta the repository is private, so Xcode needs a GitHub account with access to it, and a beta is pinned with `exact:` (a `from:` range skips pre-releases). From 1.0.0, use `from: "1.0.0"`.
+While the version is 0.x, a minor version can change the public API. To stay on 0.1 patch releases, use `.upToNextMinor(from: "0.1.0")` instead of `from:`.
 
 ## Set up
 
@@ -46,7 +46,7 @@ import SfereAnalytics
 
 let config = SfereConfiguration(
     writeKey: "keyId:secret",             // your Sfere browser key
-    host: "https://ingest.example.com"    // your ingestion host: https, no path
+    host: "https://events.sfere.io"       // Sfere's ingestion host: https, no path
 )
 config.consent = ["analytics": true, "advertising": false]   // optional
 Sfere.setup(config)
