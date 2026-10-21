@@ -2,9 +2,9 @@
 
 For developers and testers. To add the SDK to an app, see [`README.md`](README.md). The Android SDK lives in its own repository, [`sfere-io/sfere-android-sdk`](https://github.com/sfere-io/sfere-android-sdk), and sends the same payload.
 
-## Status (2026-10-20)
+## Status (2026-10-21)
 
-Ready for internal testing. Version `0.1.0-beta.2`, the first published beta ([`docs/ci-cd.md`](docs/ci-cd.md)).
+Version `0.1.0`, the first public release ([`docs/ci-cd.md`](docs/ci-cd.md)). It installs from the public repository with no GitHub account.
 
 | Area | State |
 |---|---|

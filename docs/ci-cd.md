@@ -23,7 +23,7 @@ on the job that needs more.
 | Item | Value |
 |---|---|
 | Triggers | `pull_request` (opened, synchronize, reopened); `push` to `main`; `workflow_call` (from `release.yml`) |
-| Runners | `macos-26` (Xcode 26) for **Build** and **Tests & coverage** only; Linux for the rest. macOS minutes cost ten times Linux minutes on a private repository |
+| Runners | `macos-26` (Xcode 26) for **Build** and **Tests & coverage** only; Linux for the rest. macOS runners start more slowly, and while the repository was private their minutes cost ten times Linux minutes |
 | Concurrency | one run per ref; a newer push to a PR cancels the older run |
 
 | Job (check name) | What it runs | Fails when |
@@ -43,8 +43,9 @@ required check, so **API contract** relies on **Build** being required too (it i
 GitHub reads `Package.resolved` for the dependency graph itself, so Dependabot alerts
 see the exact resolved versions with no submission workflow (the Android SDK needs
 one because Gradle resolves at build time). GitHub's pull-request dependency-review
-action is not used: on a private repository it needs GitHub Advanced Security, which
-this plan does not include.
+action is not used. It needed GitHub Advanced Security while the repository was
+private; now that the repository is public it is available, and adding it is a
+separate change.
 
 ### `release.yml` — verify and release
 
@@ -62,13 +63,13 @@ Steps, in order:
    `Sources/SfereAnalytics/Support.swift`, points at a commit on `main`, and
    `CHANGELOG.md` has a `## [X.Y.Z]` section.
 2. A throwaway app package depends on `https://github.com/sfere-io/sfere-ios-sdk.git`
-   at `exact: "X.Y.Z"` and resolves it from GitHub, as an app does (the Actions token
-   stands in for the developer's GitHub account during the beta). The resolved
-   revision must be the tagged commit, and the package must build for the iOS
-   Simulator.
+   at `exact: "X.Y.Z"` and resolves it from GitHub with no credentials, as an app
+   developer without a GitHub account does. The resolved revision must be the tagged
+   commit, and the package must build for the iOS Simulator.
 3. `gh release create vX.Y.Z` with the CHANGELOG section as notes (plus the install
    snippet and the commit), the public API dump attached, and `--prerelease` when the
-   version has a `-` suffix.
+   version has a `-` suffix. The install snippet uses `from: "X.Y.Z"` for a release
+   and `exact: "X.Y.Z"` for a pre-release.
 
 ## Releasing
 
@@ -88,20 +89,20 @@ Steps, in order:
    move or delete a tag (`protect-tags`).
 3. Watch the `release` run. When it is green, the release is at
    https://github.com/sfere-io/sfere-ios-sdk/releases.
-4. The tag is public to every app with access the moment it is pushed. If a later
-   step fails, fix forward with a new version, never by re-tagging.
+4. The tag is available to every app the moment it is pushed: the repository is
+   public. If a later step fails, fix forward with a new version, never by re-tagging.
 
-Beta versions are `X.Y.Z-beta.N` (`0.1.0-beta.1` first). An app pins a beta with
-`exact:`; `from:` ranges skip pre-releases. At 1.0.0 the repository becomes public and
-apps add it with `from: "1.0.0"`; nothing else in the flow changes.
+Releases are `X.Y.Z` (`0.1.0` first, on 2026-10-21). Apps add them with
+`from: "X.Y.Z"`. While the version is 0.x, a minor version may change the public API.
+Pre-releases are `X.Y.Z-beta.N` (`0.1.0-beta.1` and `0.1.0-beta.2` came before 0.1.0).
+An app pins a pre-release with `exact:`, because `from:` ranges skip pre-releases, and
+the release workflow marks it as a pre-release on GitHub.
 
 ## Consuming the package
 
-During the beta the repository is private. An app developer needs a GitHub account
-with read access to it, signed in under Xcode → Settings → Accounts. CI systems
-building the app use a token with read access, for example through
-`git config --global url."https://x-access-token:<token>@github.com/".insteadOf "https://github.com/"`
-in the build environment, never in the app repository. The README's **Install**
+The repository is public, so an app developer needs no GitHub account and no token:
+Xcode (File > Add Package Dependencies) and CI systems that build the app resolve
+`https://github.com/sfere-io/sfere-ios-sdk.git` anonymously. The README's **Install**
 section has the snippet.
 
 ## Branch and tag protection

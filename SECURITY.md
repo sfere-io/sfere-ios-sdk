@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-This repository is private. Please do **not** open a public issue or discuss the
+This repository is public. Please do **not** open a public issue or discuss the
 vulnerability in a pull request.
 
 Report vulnerabilities privately to the repository administrators
